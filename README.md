@@ -10,10 +10,10 @@ Mind не думает за тебя. Не интерпретирует. Не в
 
 ## Скачать
 
-[**Последний релиз →**](https://github.com/Andy-NDT/Fresh-Mind/releases/latest)
+[**Последний релиз →**](https://github.com/Andy-NDT/Fresh-Mind/releases/latest) (текущая версия — **v0.2.0**)
 
-- `Fresh-Mind-Setup-X.X.X.exe` — установщик NSIS (ярлык на рабочем столе, автозапуск опционально)
-- `Fresh-Mind-Portable-X.X.X.exe` — портативная версия (один `.exe`, никаких следов в системе)
+- `Fresh-Mind-Setup-0.2.0.exe` — установщик NSIS (ярлык на рабочем столе, автозапуск опционально)
+- `Fresh-Mind-Portable-0.2.0.exe` — портативная версия (один `.exe`, никаких следов в системе)
 
 Windows. Mac/Linux пока не собираются (планируется по запросу).
 
