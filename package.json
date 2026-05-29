@@ -7,6 +7,13 @@
     "url": "https://andy-ndt.vercel.app/"
   },
   "homepage": "https://andy-ndt.vercel.app/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Andy-NDT/Fresh-Mind.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Andy-NDT/Fresh-Mind/issues"
+  },
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
