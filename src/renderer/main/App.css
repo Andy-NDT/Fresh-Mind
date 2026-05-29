@@ -1,0 +1,492 @@
+html, body {
+  background: transparent;
+  overflow: hidden;
+  height: 100%;
+}
+
+#root {
+  height: 100%;
+  padding: 0;
+}
+
+.main-panel {
+  position: relative;
+  height: 100%;
+  background: var(--fm-bg-glass);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid var(--fm-border-glass);
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  color: var(--fm-text);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: cardSlideIn 250ms ease-out;
+}
+
+@keyframes cardSlideIn {
+  from { opacity: 0; transform: translateX(36px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.titlebar {
+  height: 44px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 12px 0 20px;
+  -webkit-app-region: drag;
+  flex-shrink: 0;
+}
+
+.titlebar.titlebar-compact {
+  height: 36px;
+  padding: 0 8px 0 14px;
+  align-items: center;
+}
+
+.titlebar.titlebar-compact .titlebar-brand {
+  align-self: center;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+}
+
+.titlebar-mini {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--fm-deep);
+  letter-spacing: 0.3px;
+  -webkit-app-region: drag;
+  line-height: 1;
+}
+
+.titlebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  -webkit-app-region: drag;
+}
+
+.titlebar-logo {
+  width: 28px;
+  height: 28px;
+  filter: var(--fm-drop-shadow-logo);
+  -webkit-user-drag: none;
+}
+
+.titlebar-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--fm-deep);
+  letter-spacing: 0.2px;
+}
+
+.titlebar-sub {
+  font-size: 11px;
+  color: var(--fm-text-muted);
+  letter-spacing: 0.2px;
+  margin-left: 6px;
+}
+
+.titlebar-buttons {
+  display: flex;
+  gap: 6px;
+  -webkit-app-region: no-drag;
+}
+
+.tbbtn {
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--fm-tint-mid);
+  background: var(--fm-bg-soft);
+  border-radius: 50%;
+  color: var(--fm-text-row);
+  cursor: pointer;
+  transition: all var(--fm-transition-slow);
+  padding: 0;
+}
+
+.tbbtn:hover {
+  background: var(--fm-hover);
+  border-color: var(--fm-border-hover);
+  color: var(--fm-main);
+}
+
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 clamp(10px, 2.2vw, 32px) clamp(16px, 3vw, 32px);
+  -webkit-app-region: no-drag;
+  scrollbar-width: thin;
+  scrollbar-color: var(--fm-scrollbar-thumb) transparent;
+  transition: padding-right 220ms ease;
+}
+
+/* В компактном виде — плотнее, как у Eye/Ear */
+.titlebar.titlebar-compact + .main-content {
+  padding: 0 14px 4px;
+}
+
+
+.main-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.main-content::-webkit-scrollbar-thumb {
+  background: var(--fm-scrollbar-thumb);
+  border-radius: 6px;
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 32px 0 36px;
+}
+
+.hero-logo {
+  width: 128px;
+  height: 128px;
+  filter: var(--fm-drop-shadow-logo);
+  margin-bottom: 18px;
+}
+
+.hero-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--fm-deep);
+  letter-spacing: -0.4px;
+  margin-bottom: 6px;
+  line-height: 1;
+}
+
+.hero-sub {
+  font-size: 13px;
+  color: var(--fm-text-muted);
+  letter-spacing: 0.1px;
+}
+
+/* Compact hero — горизонтальный для экономии вертикального места */
+.hero.hero-compact {
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 0 12px;
+  gap: 14px;
+}
+.hero.hero-compact .hero-logo {
+  width: 52px;
+  height: 52px;
+  margin-bottom: 0;
+}
+.hero.hero-compact .hero-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+.hero.hero-compact .hero-title {
+  font-size: 19px;
+  margin-bottom: 0;
+}
+.hero.hero-compact .hero-sub {
+  font-size: 11.5px;
+}
+
+/* Радар-стейдж: одно или два колеса side-by-side */
+.radar-stage {
+  width: 100%;
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  align-items: flex-start;
+}
+.radar-stage > .radar-chart {
+  flex: 0 1 780px;
+  min-width: 0;
+}
+.radar-stage.is-compare > .radar-chart {
+  flex: 1 1 0;
+  max-width: 520px;
+}
+
+/* Радар-стейдж теперь шире на dashboard */
+.radar-stage {
+  max-width: 1100px;
+  margin: 12px auto 0;
+}
+
+/* Section divider — визуальная граница между блоками */
+.section-divider {
+  max-width: 1100px;
+  margin: 22px auto 4px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.section-divider::before,
+.section-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--fm-border-soft), transparent);
+}
+
+.section-divider-spaced { margin-top: 22px; }
+
+.section-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--fm-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  white-space: nowrap;
+}
+
+.section-label-accent {
+  color: var(--fm-deep);
+  font-size: 12px;
+  letter-spacing: 1.4px;
+}
+
+/* Compact-карточка (как у попапа Eye/Ear) */
+.card-collapsed {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 0;
+}
+
+.card-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  margin: 2px 0;
+}
+
+.card-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px;
+  border: 1px solid;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.card-stat-name {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--fm-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.card-stat-value {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--fm-deep);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.card-prompt {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--fm-text);
+  line-height: 1.25;
+  margin-top: 4px;
+  text-align: center;
+}
+
+.card-sub {
+  font-size: 11.5px;
+  color: var(--fm-text-soft);
+  line-height: 1.35;
+  font-style: italic;
+  text-align: center;
+}
+
+.card-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.card-action {
+  flex: 1;
+  padding: 8px 0;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--fm-font);
+  transition: all var(--fm-transition);
+}
+
+.card-action-secondary {
+  background: var(--fm-bg-soft);
+  color: var(--fm-text-row);
+  border-color: var(--fm-border-soft);
+}
+.card-action-secondary:hover { background: var(--fm-hover); color: var(--fm-deep); }
+
+.card-action-primary {
+  background: var(--fm-gradient-toggle);
+  color: white;
+}
+.card-action-primary:hover {
+  background: var(--fm-gradient-primary-hover);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.dashboard-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 16px auto 4px;
+  padding: 8px 18px;
+  background: var(--fm-bg-card);
+  border: 1px solid var(--fm-border-soft);
+  border-radius: 10px;
+  font-family: var(--fm-font);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fm-deep);
+  letter-spacing: 0.4px;
+  cursor: pointer;
+  transition: all var(--fm-transition);
+}
+.dashboard-toggle:hover {
+  background: var(--fm-hover);
+  border-color: var(--fm-border-hover);
+}
+.dashboard-toggle-icon {
+  font-size: 10px;
+  color: var(--fm-text-muted);
+}
+
+.dashboard-toggle-compact {
+  padding: 4px 12px;
+  font-size: 12px;
+  min-width: 0;
+}
+
+.section-divider-first { margin-top: 0; margin-bottom: 4px; }
+.section-divider-spaced-top { margin-top: 28px; }
+.section-divider-tight-bottom { margin-bottom: 2px; }
+
+/* Адаптив: при узком окне ужимаем отступы и брендинг */
+@media (max-width: 1280px) {
+  .main-content { padding: 10px 22px 24px; }
+  .titlebar-logo { width: 40px; height: 40px; }
+  .titlebar-title { font-size: 19px; }
+  .titlebar-sub { font-size: 12.5px; }
+  .titlebar { height: 56px; }
+}
+
+@media (max-width: 1180px) {
+  .main-content { padding: 8px 16px 20px; }
+  .titlebar-logo { width: 34px; height: 34px; }
+  .titlebar-title { font-size: 17px; }
+  .titlebar-sub { font-size: 12px; }
+  .titlebar { height: 50px; padding: 0 10px 0 14px; }
+  .section-divider { margin: 20px auto 4px; }
+  .section-divider-first { margin-top: 2px; }
+  .section-label { font-size: 10.5px; letter-spacing: 1px; }
+}
+
+@media (max-width: 980px) {
+  .main-content { padding: 6px 10px 16px; }
+  .titlebar { height: 46px; }
+  .titlebar-logo { width: 30px; height: 30px; }
+  .titlebar-title { font-size: 15px; }
+  .titlebar-sub { font-size: 11px; }
+  .section-divider { margin: 18px auto 3px; }
+  .section-divider-first { margin-top: 2px; }
+  .section-label { font-size: 10px; letter-spacing: 0.8px; }
+}
+
+/* На самой минимальной ширине (компакт-попап) подзаголовок прячем */
+@media (max-width: 420px) {
+  .titlebar-sub { display: none; }
+}
+
+.qc-saved-toast {
+  max-width: 220px;
+  margin: 6px auto 0;
+  padding: 5px 14px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: white;
+  background: var(--fm-main);
+  border-radius: 999px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  animation: qcSavedToast 2.5s ease-in-out forwards;
+}
+
+@keyframes qcSavedToast {
+  0%   { opacity: 0; transform: translateY(-4px) scale(0.9); }
+  10%  { opacity: 1; transform: translateY(0) scale(1); }
+  80%  { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-2px) scale(0.95); }
+}
+
+.placeholder-card {
+  max-width: 1100px;
+  margin: 6px auto 14px;
+  background: var(--fm-bg-card);
+  border: 1px solid var(--fm-border-soft);
+  border-radius: var(--fm-radius-md);
+  padding: 14px 20px;
+}
+
+.placeholder-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--fm-text-mid);
+  margin-bottom: 12px;
+  letter-spacing: 0.1px;
+}
+
+.placeholder-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.placeholder-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12.5px;
+  color: var(--fm-text-soft);
+  padding: 7px 0;
+  border-bottom: 1px solid var(--fm-border-line);
+}
+
+.placeholder-list li:last-child { border-bottom: none; }
+
+.step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--fm-hover-soft);
+  color: var(--fm-deep);
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}

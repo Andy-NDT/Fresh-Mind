@@ -1,0 +1,103 @@
+:root {
+  /* Lavender palette (Fresh Mind line) */
+  --fm-main: #9B7BD9;
+  --fm-light: #B49EE3;
+  --fm-deep: #7757B8;
+  --fm-soft: #D6C7EE;
+
+  --fm-text: #3A2C5C;
+  --fm-text-mid: #4F4070;
+  --fm-text-soft: #6F608A;
+  --fm-text-muted: #8B7BA8;
+  --fm-text-faint: #A695C2;
+  --fm-text-row: #6F608A;
+
+  --fm-bg: #EFEBF6;
+  --fm-bg-glass: rgba(239, 235, 246, 0.92);
+  --fm-bg-card: rgba(255, 255, 255, 0.4);
+  --fm-bg-overlay: rgba(255, 255, 255, 0.45);
+  --fm-bg-soft: rgba(255, 255, 255, 0.55);
+
+  --fm-tint-soft: rgba(60, 40, 100, 0.035);
+  --fm-tint-mid: rgba(60, 40, 100, 0.07);
+
+  --fm-border-glass: rgba(255, 255, 255, 0.5);
+  --fm-border-soft: rgba(70, 50, 110, 0.07);
+  --fm-border-line: rgba(60, 40, 100, 0.045);
+  --fm-border-hover: rgba(155, 123, 217, 0.30);
+
+  --fm-hover: rgba(155, 123, 217, 0.14);
+  --fm-hover-soft: rgba(155, 123, 217, 0.10);
+
+  --fm-toggle-off: #BFB5CC;
+  --fm-toggle-on-shadow: rgba(155, 123, 217, 0.22);
+
+  --fm-shadow-glow: 0 4px 18px rgba(155, 123, 217, 0.24);
+  --fm-shadow-panel: 0 10px 40px rgba(70, 50, 110, 0.12);
+  --fm-shadow-btn: 0 2px 10px rgba(155, 123, 217, 0.28);
+  --fm-shadow-btn-hover: 0 3px 14px rgba(119, 87, 184, 0.35);
+  --fm-shadow-card: 0 3px 12px rgba(155, 123, 217, 0.18);
+  --fm-shadow-card-hover: 0 4px 16px rgba(155, 123, 217, 0.28);
+  --fm-shadow-inset-top: 0 1px 0 rgba(255, 255, 255, 0.6) inset;
+  --fm-drop-shadow-logo: drop-shadow(0 4px 16px rgba(155, 123, 217, 0.24));
+
+  --fm-scrollbar-thumb: rgba(155, 123, 217, 0.28);
+
+  --fm-streak: #e8820c;
+
+  /* Радиусы — строгая система 6/10/14/20 */
+  --fm-radius-sm: 6px;
+  --fm-radius-md: 10px;
+  --fm-radius-lg: 14px;
+  --fm-radius-xl: 20px;
+
+  --fm-font: 'Segoe UI', system-ui, sans-serif;
+
+  --fm-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --fm-transition: 0.3s ease;
+  --fm-transition-slow: 0.35s ease;
+
+  --fm-gradient-primary: linear-gradient(135deg, var(--fm-main), var(--fm-light), var(--fm-soft));
+  --fm-gradient-primary-hover: linear-gradient(135deg, var(--fm-deep), #6849A8, var(--fm-main));
+  --fm-gradient-soft: linear-gradient(135deg, var(--fm-light), var(--fm-main));
+  --fm-gradient-toggle: linear-gradient(135deg, var(--fm-light), var(--fm-main));
+  --fm-gradient-divider: linear-gradient(90deg, transparent, rgba(70, 50, 110, 0.08), transparent);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  font-family: var(--fm-font);
+  color: var(--fm-text-mid);
+}
+
+/* Глобальная анимация-пульс для loading-состояний всего приложения */
+@keyframes fmPulse {
+  0%, 100% { opacity: 0.5; }
+  50%      { opacity: 1; }
+}
+
+.fm-pulse {
+  animation: fmPulse 1.5s ease-in-out infinite;
+}
+
+/* Единая анимация появления всех попап-окон (Settings, Sphere settings, Trash,
+   Backup, About). fade-in 200ms + slide-up 8px. Применяется на root .ss-panel,
+   .settings-panel, .trash-panel, .bk-panel, .ab-panel. */
+@keyframes fmWindowAppear {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.window-appear,
+.settings-panel,
+.ss-panel,
+.trash-panel,
+.bk-panel,
+.ab-panel {
+  animation: fmWindowAppear 200ms ease-out;
+}

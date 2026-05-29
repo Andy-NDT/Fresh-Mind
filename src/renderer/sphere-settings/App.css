@@ -1,0 +1,362 @@
+html, body { background: transparent; overflow: hidden; margin: 0; }
+#root { padding: 0; }
+body { padding: 0; }
+
+.ss-panel {
+  position: relative;
+  padding: 8px 10px 10px;
+  background: var(--fm-bg-glass);
+  backdrop-filter: blur(28px);
+  -webkit-backdrop-filter: blur(28px);
+  border: 1px solid var(--fm-border-glass);
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  color: var(--fm-text);
+  font-family: var(--fm-font);
+  -webkit-app-region: drag;
+}
+
+.ss-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  -webkit-app-region: drag;
+}
+
+.ss-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--fm-deep);
+  letter-spacing: 0.3px;
+}
+
+.ss-close {
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--fm-border-soft);
+  background: var(--fm-bg-soft);
+  color: var(--fm-text-row);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 0;
+  -webkit-app-region: no-drag;
+  transition: all var(--fm-transition);
+}
+.ss-close:hover { background: var(--fm-hover); color: var(--fm-deep); }
+
+.ss-hint {
+  font-size: 9.5px;
+  color: var(--fm-text-faint);
+  font-style: italic;
+  line-height: 1.3;
+  margin-bottom: 5px;
+  -webkit-app-region: no-drag;
+}
+
+.ss-handle-icon { font-style: normal; font-weight: 700; color: var(--fm-text-row); }
+
+.ss-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  -webkit-app-region: no-drag;
+}
+
+/* ── Group ────────────────────────────────────────────── */
+.ss-group {
+  border-left: 3px solid var(--group-color, var(--fm-main));
+  background: linear-gradient(90deg,
+    color-mix(in srgb, var(--group-color, var(--fm-main)) 8%, transparent),
+    transparent 80%);
+  border-radius: 6px;
+  padding: 3px 5px 4px 7px;
+}
+
+.ss-group-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 2px;
+}
+
+.ss-group-name {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-family: var(--fm-font);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--group-color, var(--fm-deep));
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 1px 3px;
+  outline: none;
+  border-radius: 6px;
+  filter: brightness(0.8);
+  min-width: 0;
+}
+.ss-group-name:hover { background: rgba(255, 255, 255, 0.45); }
+.ss-group-name:focus { background: white; }
+
+/* ── Sphere list (с прокруткой при большом числе сфер) ── */
+.ss-spheres-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  max-height: 130px; /* ~6 сфер влезает без скролла */
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--fm-scrollbar-thumb) transparent;
+  padding-right: 2px;
+}
+.ss-spheres-list::-webkit-scrollbar { width: 4px; }
+.ss-spheres-list::-webkit-scrollbar-thumb {
+  background: var(--fm-scrollbar-thumb);
+  border-radius: 6px;
+}
+
+.ss-sphere-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 3px 1px 1px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid var(--fm-border-soft);
+  border-radius: 6px;
+  cursor: grab;
+  transition: all var(--fm-transition);
+}
+.ss-sphere-row:hover { background: white; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); }
+.ss-sphere-row.is-dragging { opacity: 0.4; cursor: grabbing; }
+.ss-sphere-row.is-archived { opacity: 0.45; }
+
+.ss-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 10px;
+  height: 16px;
+  color: var(--fm-text-faint);
+  font-size: 10px;
+  user-select: none;
+  cursor: grab;
+}
+
+.ss-color-swatch {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 1.5px solid white;
+  box-shadow: 0 0 0 1px var(--fm-border-soft);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition: transform var(--fm-transition);
+}
+.ss-color-swatch:hover { transform: scale(1.18); }
+
+.ss-sphere-name {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-family: var(--fm-font);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--fm-text);
+  padding: 1px 3px;
+  outline: none;
+  border-radius: 6px;
+  min-width: 0;
+}
+.ss-sphere-name:hover { background: rgba(255, 255, 255, 0.6); }
+.ss-sphere-name:focus { background: white; }
+
+.ss-iconbtn {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--fm-text-faint);
+  cursor: pointer;
+  padding: 0;
+  transition: all var(--fm-transition);
+}
+.ss-iconbtn svg { width: 10px; height: 10px; }
+.ss-iconbtn:hover {
+  background: var(--fm-bg-soft);
+  color: var(--fm-deep);
+  border-color: var(--fm-border-soft);
+}
+
+.ss-archive-btn.on {
+  background: var(--fm-bg-soft);
+  color: var(--fm-deep);
+  border-color: var(--fm-border-hover);
+}
+
+.ss-del-btn { font-size: 12px; line-height: 1; }
+.ss-del-btn:hover {
+  background: rgba(198, 40, 40, 0.10);
+  color: #C62828;
+  border-color: rgba(198, 40, 40, 0.30);
+}
+
+/* ── Add buttons ───────────────────────────────────── */
+.ss-add-sphere {
+  border: 1px dashed var(--fm-border-soft);
+  background: transparent;
+  color: var(--fm-text-muted);
+  border-radius: 6px;
+  padding: 2px;
+  font-family: var(--fm-font);
+  font-size: 9.5px;
+  cursor: pointer;
+  margin-top: 1px;
+  transition: all var(--fm-transition);
+}
+.ss-add-sphere:hover {
+  background: rgba(255, 255, 255, 0.55);
+  color: var(--fm-deep);
+  border-color: var(--group-color, var(--fm-border-hover));
+}
+
+.ss-add-group {
+  border: 1px dashed var(--fm-border-soft);
+  background: transparent;
+  color: var(--fm-text-muted);
+  border-radius: 6px;
+  padding: 4px;
+  font-family: var(--fm-font);
+  font-size: 10.5px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 2px;
+  transition: all var(--fm-transition);
+}
+.ss-add-group:hover {
+  background: var(--fm-hover);
+  color: var(--fm-deep);
+  border-color: var(--fm-border-hover);
+}
+
+/* ── Color picker popover ────────────────────────── */
+.ss-color-popover {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(58, 44, 92, 0.25);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  animation: fadeIn 0.12s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0 }
+  to   { opacity: 1 }
+}
+
+.ss-color-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  padding: 16px;
+  background: var(--fm-bg-card);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  max-width: 280px;
+}
+
+.ss-color-pick {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 0 0 1px var(--fm-border-soft);
+  cursor: pointer;
+  padding: 0;
+  transition: transform var(--fm-transition);
+}
+.ss-color-pick:hover { transform: scale(1.15); }
+
+/* ── Confirm dialog ──────────────────────────────── */
+.ss-confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(58, 44, 92, 0.30);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  animation: fadeIn 0.12s ease-out;
+}
+
+.ss-confirm {
+  background: var(--fm-bg-card);
+  border-radius: 10px;
+  padding: 16px 18px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  max-width: 320px;
+  width: 92%;
+  font-family: var(--fm-font);
+}
+
+.ss-confirm-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--fm-deep);
+  margin-bottom: 6px;
+}
+
+.ss-confirm-hint {
+  font-size: 11.5px;
+  color: var(--fm-text-soft);
+  line-height: 1.4;
+  margin-bottom: 14px;
+}
+
+.ss-confirm-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.ss-btn {
+  padding: 7px 14px;
+  border-radius: 10px;
+  font-family: var(--fm-font);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--fm-transition);
+}
+
+.ss-btn-secondary {
+  background: var(--fm-bg-soft);
+  border: 1px solid var(--fm-border-soft);
+  color: var(--fm-text-row);
+}
+.ss-btn-secondary:hover { background: var(--fm-hover); }
+
+.ss-btn-danger {
+  background: #C62828;
+  border: 1px solid #C62828;
+  color: white;
+}
+.ss-btn-danger:hover { background: #B71C1C; }

@@ -1,0 +1,29 @@
+node_modules/
+out/
+release/
+dist/
+build/
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+resources/icons-crop/
+
+# Личные данные пользователя — НЕ коммитить ни при каких обстоятельствах
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.bak
+attachments/
+freshmind.db*
+
+# Среда
+.env
+.env.local
+.env.*.local
+
+# Внутренние планы и роадмапы (личные, не для публикации)
+fresh-mind-roadmap-*.md
+fresh-mind-step*.md

@@ -1,0 +1,654 @@
+.entry-feed {
+  width: 100%;
+  max-width: 720px;
+  margin: 4px auto 22px;
+  font-family: var(--fm-font);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ef-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ef-search {
+  width: 100%;
+  border: 1px solid var(--fm-border-soft);
+  background: var(--fm-bg-card);
+  color: var(--fm-text);
+  font-family: var(--fm-font);
+  font-size: 12.5px;
+  border-radius: 10px;
+  padding: 7px 26px 7px 12px;
+  outline: none;
+  transition: border-color var(--fm-transition);
+}
+.ef-search:focus { border-color: var(--fm-main); background: white; }
+
+.ef-search-clear {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  border: none;
+  background: transparent;
+  color: var(--fm-text-faint);
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 50%;
+  padding: 0;
+  line-height: 1;
+}
+.ef-search-clear:hover { background: var(--fm-bg-soft); color: var(--fm-deep); }
+
+.ef-pin-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 9px;
+  border: 1px solid var(--fm-border-soft);
+  background: var(--fm-bg-card);
+  color: var(--fm-text-soft);
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: var(--fm-font);
+  font-size: 11px;
+  font-weight: 600;
+  flex-shrink: 0;
+  transition: all var(--fm-transition);
+}
+.ef-pin-filter:hover {
+  background: var(--fm-hover);
+  color: var(--fm-deep);
+  border-color: var(--fm-border-hover);
+}
+.ef-pin-filter.on {
+  background: var(--fm-main);
+  color: white;
+  border-color: var(--fm-main);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.ef-pin-count {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 0 5px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.25);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.4;
+}
+.ef-pin-filter:not(.on) .ef-pin-count {
+  background: var(--fm-hover-soft);
+  color: var(--fm-deep);
+}
+
+.ef-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--fm-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin: 6px 2px 2px;
+}
+
+/* ── Год-табы ─────────────────────────────────────── */
+.ef-year-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px 2px 2px;
+}
+
+.ef-year-tab {
+  padding: 4px 12px;
+  border: 1px solid var(--fm-border-soft);
+  background: var(--fm-bg-card);
+  color: var(--fm-text-soft);
+  border-radius: 6px;
+  font-family: var(--fm-font);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--fm-transition);
+  font-variant-numeric: tabular-nums;
+}
+.ef-year-tab:hover { background: var(--fm-hover); }
+.ef-year-tab.on {
+  background: var(--fm-deep);
+  color: white;
+  border-color: var(--fm-deep);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+/* ── Mini-tools: развернуть/свернуть все ─────────── */
+.ef-month-tools {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+  margin: 2px 2px -2px;
+}
+
+.ef-month-tool {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--fm-text-faint);
+  font-family: var(--fm-font);
+  cursor: pointer;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+.ef-month-tool:hover { color: var(--fm-deep); background: var(--fm-bg-soft); }
+
+.ef-month-show-more {
+  width: 100%;
+  padding: 6px;
+  border: 1px dashed var(--fm-border-soft);
+  background: transparent;
+  color: var(--fm-text-muted);
+  border-radius: 6px;
+  font-family: var(--fm-font);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 2px;
+  transition: all var(--fm-transition);
+}
+.ef-month-show-more:hover {
+  background: var(--fm-hover);
+  color: var(--fm-deep);
+  border-color: var(--fm-border-hover);
+}
+
+/* ── Группы месяцев ──────────────────────────────── */
+.ef-month-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ef-month-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid var(--fm-border-soft);
+  border-radius: 10px;
+  cursor: pointer;
+  font-family: var(--fm-font);
+  text-align: left;
+  margin-top: 4px;
+  transition: background var(--fm-transition), border-color var(--fm-transition);
+}
+.ef-month-header:hover {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: var(--fm-border-hover);
+}
+.ef-month-header.is-collapsed {
+  background: var(--fm-bg-soft);
+}
+
+.ef-month-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--fm-deep);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  flex: 1;
+}
+
+.ef-month-count {
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 1px 7px;
+  background: var(--fm-hover-soft);
+  color: var(--fm-deep);
+  border-radius: 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ef-month-chevron {
+  color: var(--fm-text-muted);
+  transition: transform 220ms ease;
+  flex-shrink: 0;
+}
+
+.ef-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ef-loading, .ef-empty {
+  font-size: 12px;
+  color: var(--fm-text-faint);
+  font-style: italic;
+  text-align: center;
+  padding: 14px 8px;
+}
+
+/* ── Карточка записи ─────────────────────────────────── */
+.ef-card {
+  background: var(--fm-bg-card);
+  border: 1px solid var(--fm-border-soft);
+  border-radius: 10px;
+  padding: 7px 10px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: border-color var(--fm-transition), box-shadow var(--fm-transition);
+}
+.ef-card:hover {
+  border-color: var(--fm-border-hover);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.ef-card.is-pinned {
+  background: linear-gradient(180deg, rgba(155, 123, 217, 0.07), var(--fm-bg-card) 30%);
+  border-color: rgba(155, 123, 217, 0.30);
+}
+
+.ef-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  color: var(--fm-text-muted);
+  font-weight: 500;
+}
+
+.ef-date { font-variant-numeric: tabular-nums; }
+
+.ef-mood { font-size: 13px; line-height: 1; }
+
+.ef-pin-icon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--fm-main);
+}
+
+.ef-meta-spacer { flex: 1; }
+
+.ef-act {
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--fm-text-faint);
+  cursor: pointer;
+  padding: 0;
+  font-size: 13px;
+  line-height: 1;
+  transition: all var(--fm-transition);
+}
+.ef-act:hover {
+  background: var(--fm-bg-soft);
+  color: var(--fm-deep);
+  border-color: var(--fm-border-soft);
+}
+.ef-act-del:hover {
+  background: rgba(198, 40, 40, 0.08);
+  color: #C62828;
+  border-color: rgba(198, 40, 40, 0.30);
+}
+
+.ef-spheres {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.ef-sphere-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 7px 1px 5px;
+  border: 1px solid;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--fm-text);
+}
+
+.ef-sphere-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.ef-card-body {
+  width: 100%;
+  background: transparent;
+  border: none;
+  text-align: left;
+  font-family: var(--fm-font);
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--fm-text);
+  cursor: pointer;
+  padding: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.ef-card.is-expanded .ef-card-body { white-space: pre-wrap; }
+
+.ef-hashtag {
+  color: var(--fm-deep);
+  font-weight: 600;
+  background: var(--fm-hover-soft);
+  padding: 1px 4px;
+  border-radius: 6px;
+}
+
+.ef-empty-text {
+  color: var(--fm-text-faint);
+  font-size: 11.5px;
+}
+
+.ef-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.ef-tag {
+  font-size: 10.5px;
+  color: var(--fm-deep);
+  background: var(--fm-hover-soft);
+  padding: 1px 6px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+/* ── Изображения в карточке (свёрнуто: фикс-thumb 96×96; раскрыто: полноразмер) ── */
+.ef-images {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ef-image-wrap {
+  position: relative;
+  width: 96px;
+  height: 96px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--fm-border-line);
+  cursor: zoom-in;
+  background: var(--fm-bg-soft);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+.ef-image-wrap:hover {
+  transform: scale(1.03);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.ef-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ef-image-missing {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: var(--fm-bg-soft);
+  color: var(--fm-text-faint);
+  font-size: 9px;
+  text-align: center;
+  padding: 4px;
+}
+.ef-image-missing svg { opacity: 0.6; }
+
+.ef-image-badge {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.48);
+  color: white;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  pointer-events: none;
+}
+
+/* Раскрытое: каждая картинка во всю ширину, без обрезки */
+.ef-card.is-expanded .ef-images {
+  flex-direction: column;
+  gap: 8px;
+}
+.ef-card.is-expanded .ef-image-wrap {
+  width: 100%;
+  height: auto;
+  max-height: 560px;
+}
+.ef-card.is-expanded .ef-image-wrap:hover { transform: none; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); }
+.ef-card.is-expanded .ef-image {
+  height: auto;
+  max-height: 560px;
+  object-fit: contain;
+}
+
+/* ── Lightbox (полноэкранный просмотр) ─────────────── */
+.ef-lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(6px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: zoom-out;
+  animation: efLightboxIn 180ms ease-out;
+}
+
+@keyframes efLightboxIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.ef-lightbox img {
+  max-width: 92vw;
+  max-height: 92vh;
+  border-radius: 10px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+  cursor: default;
+}
+
+.ef-lightbox-close {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.18);
+  color: white;
+  font-size: 22px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+  transition: background 150ms;
+}
+.ef-lightbox-close:hover { background: rgba(255, 255, 255, 0.32); }
+
+/* ── Editing mode ────────────────────────────────────── */
+.ef-card.is-editing { border-color: var(--fm-main); }
+
+.ef-edit-textarea {
+  width: 100%;
+  min-height: 70px;
+  border: 1px solid var(--fm-border-soft);
+  background: white;
+  color: var(--fm-text);
+  font-family: var(--fm-font);
+  font-size: 12.5px;
+  line-height: 1.5;
+  border-radius: 6px;
+  padding: 7px 10px;
+  outline: none;
+  resize: vertical;
+  box-sizing: border-box;
+}
+.ef-edit-textarea:focus { border-color: var(--fm-main); }
+
+.ef-edit-mood-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 6px;
+  padding-top: 5px;
+  border-top: 1px solid var(--fm-border-line);
+}
+
+.ef-edit-mood-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 9.5px;
+  font-weight: 600;
+  color: var(--fm-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ef-edit-mood-clear {
+  width: 16px;
+  height: 16px;
+  border: none;
+  background: transparent;
+  color: var(--fm-text-faint);
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 0;
+  line-height: 1;
+}
+.ef-edit-mood-clear:hover { background: var(--fm-hover); color: var(--fm-deep); }
+
+.ef-edit-mood-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1px;
+}
+
+.ef-edit-mood {
+  width: 22px;
+  height: 22px;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: all var(--fm-transition);
+}
+.ef-edit-mood:hover { background: var(--fm-hover); }
+.ef-edit-mood.on {
+  background: var(--fm-hover);
+  border-color: var(--fm-border-hover);
+}
+
+.ef-edit-spheres {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 5px;
+}
+
+.ef-edit-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.ef-edit-hint {
+  flex: 1;
+  font-size: 10px;
+  color: var(--fm-text-faint);
+  font-style: italic;
+}
+
+.ef-edit-btn {
+  padding: 4px 12px;
+  font-family: var(--fm-font);
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 1px solid;
+  transition: all var(--fm-transition);
+}
+
+.ef-edit-cancel {
+  background: var(--fm-bg-soft);
+  border-color: var(--fm-border-soft);
+  color: var(--fm-text-row);
+}
+.ef-edit-cancel:hover { background: var(--fm-hover); }
+
+.ef-edit-save {
+  background: var(--fm-main);
+  border-color: var(--fm-main);
+  color: white;
+}
+.ef-edit-save:hover { background: var(--fm-deep); border-color: var(--fm-deep); }
+
+.ef-load-more {
+  width: 100%;
+  padding: 8px;
+  border: 1px dashed var(--fm-border-soft);
+  background: transparent;
+  color: var(--fm-text-muted);
+  border-radius: 10px;
+  font-family: var(--fm-font);
+  font-size: 11.5px;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: all var(--fm-transition);
+}
+.ef-load-more:hover {
+  background: var(--fm-hover);
+  color: var(--fm-deep);
+  border-color: var(--fm-border-hover);
+}

@@ -1,0 +1,272 @@
+.radar-chart {
+  width: 100%;
+  max-width: clamp(380px, 58vw, 780px);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.radar-chart.radar-compact { margin: 4px auto 8px; }
+.radar-chart.radar-compact .radar-datebtn,
+.radar-chart.radar-compact .radar-dateinput,
+.radar-chart.radar-compact .radar-datetoday,
+.radar-chart.radar-compact .radar-datecompare { transform: scale(0.92); }
+
+.radar-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+.radar-web {
+  transition: fill 200ms ease, stroke 200ms ease;
+  filter: drop-shadow(0 0 12px rgba(155, 123, 217, 0.20));
+}
+
+.radar-sphere-clin {
+  transition: opacity 180ms ease;
+}
+
+.radar-sphere-clin:hover { opacity: 0.45 !important; }
+
+.radar-hub-circle {
+  transition: stroke-width 120ms ease, filter 180ms ease;
+  filter: drop-shadow(0 2px 4px rgba(58, 44, 92, 0.18));
+}
+.radar-hub-g:hover .radar-hub-circle {
+  filter: drop-shadow(0 3px 6px rgba(58, 44, 92, 0.32));
+}
+.radar-hub-circle.on { filter: drop-shadow(0 4px 8px rgba(58, 44, 92, 0.42)); }
+
+.radar-hub-name {
+  font-family: var(--fm-font);
+  font-size: 8.5px;
+  font-weight: 700;
+  letter-spacing: 0.15px;
+  fill: #fff;
+  pointer-events: none;
+  user-select: none;
+}
+
+.radar-node-num {
+  font-family: var(--fm-font);
+  font-size: 11px;
+  font-weight: 800;
+  fill: #fff;
+  pointer-events: none;
+  user-select: none;
+  font-variant-numeric: tabular-nums;
+  transition: x 480ms cubic-bezier(0.34, 1.56, 0.64, 1), y 480ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.radar-node-circle {
+  transition:
+    cx 520ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    cy 520ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    stroke-width 200ms ease;
+}
+
+@keyframes nodeFlash {
+  0%   { stroke-width: 2; r: 13;  filter: drop-shadow(0 0 0 rgba(0,0,0,0)); }
+  35%  { stroke-width: 5; r: 17;  filter: drop-shadow(0 0 10px rgba(155,123,217,0.65)); }
+  100% { stroke-width: 2; r: 13;  filter: drop-shadow(0 0 0 rgba(0,0,0,0)); }
+}
+
+.radar-node-g.is-flash .radar-node-circle {
+  animation: nodeFlash 600ms ease-out;
+}
+
+.radar-clear-x {
+  font-family: var(--fm-font);
+  font-size: 18px;
+  font-weight: 700;
+  pointer-events: none;
+  user-select: none;
+}
+
+.radar-dateundo {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--fm-border-soft);
+  background: var(--fm-bg-soft);
+  color: var(--fm-deep);
+  border-radius: 10px;
+  font-family: var(--fm-font);
+  font-size: 15px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  margin-left: 4px;
+  transition: all var(--fm-transition);
+}
+.radar-dateundo:hover { background: var(--fm-hover); }
+
+
+.radar-label-text {
+  font-family: var(--fm-font);
+  font-size: 10.5px;
+  font-weight: 600;
+  fill: var(--fm-text-mid);
+  pointer-events: none;
+  user-select: none;
+}
+
+
+.radar-label-value {
+  font-family: var(--fm-font);
+  font-size: 10px;
+  font-weight: 700;
+  fill: var(--fm-deep);
+  pointer-events: none;
+  user-select: none;
+}
+
+.radar-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--fm-font);
+  margin-top: -4px;
+  width: 100%;
+}
+
+.radar-date {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fm-deep);
+}
+
+.radar-datebar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  flex-wrap: wrap;
+}
+
+.radar-datebtn {
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--fm-border-soft);
+  background: var(--fm-bg-card);
+  color: var(--fm-deep);
+  border-radius: 10px;
+  font-family: var(--fm-font);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: all var(--fm-transition);
+}
+.radar-datebtn:hover:not(:disabled) { background: var(--fm-hover); }
+.radar-datebtn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.radar-dateinput {
+  border: none;
+  background: transparent;
+  font-family: var(--fm-font);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--fm-deep);
+  padding: 2px 2px;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  width: 86px;
+  outline: none;
+}
+
+/* Скрываем встроенную календарную иконку браузера — у нас своя кнопка слева */
+.radar-dateinput::-webkit-calendar-picker-indicator {
+  display: none;
+  -webkit-appearance: none;
+}
+
+.radar-datepicker {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--fm-border-soft);
+  background: var(--fm-bg-card);
+  color: var(--fm-deep);
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 0;
+  margin: 0 2px;
+  transition: all var(--fm-transition);
+}
+
+.radar-datepicker:hover {
+  background: var(--fm-hover);
+  border-color: var(--fm-border-hover);
+}
+
+.radar-datelabel {
+  font-size: 12px;
+  color: var(--fm-text-soft);
+  font-weight: 500;
+}
+
+.radar-datetoday,
+.radar-datecompare,
+.radar-datepreset {
+  border: 1px solid var(--fm-border-soft);
+  background: var(--fm-bg-soft);
+  color: var(--fm-deep);
+  font-family: var(--fm-font);
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 10px;
+  padding: 3px 9px;
+  cursor: pointer;
+  margin-left: 4px;
+  transition: all var(--fm-transition);
+  white-space: nowrap;
+}
+.radar-datetoday:hover,
+.radar-datecompare:hover,
+.radar-datepreset:hover { background: var(--fm-hover); }
+
+.radar-datepresets {
+  display: inline-flex;
+  gap: 2px;
+  margin-left: 6px;
+  padding-left: 8px;
+  border-left: 1px solid var(--fm-border-line);
+}
+.radar-datepresets .radar-datepreset { margin-left: 0; }
+
+.radar-datecompare.on {
+  background: var(--fm-main);
+  border-color: var(--fm-main);
+  color: white;
+}
+
+.radar-hint {
+  font-size: 11px;
+  color: var(--fm-text-faint);
+  font-style: italic;
+  text-align: center;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.radar-empty {
+  width: 100%;
+  max-width: 640px;
+  margin: 24px auto;
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--fm-text-faint);
+  font-family: var(--fm-font);
+  font-size: 13px;
+  font-style: italic;
+}

@@ -1,0 +1,26 @@
+Copyright (c) 2026 Andy NDT (Andrey Tretyakov)
+
+All rights reserved.
+
+This software and associated documentation files (the "Software") may be
+viewed for personal reference purposes only.
+
+You may NOT:
+- Use the Software or any part of it in any other project,
+  commercial or non-commercial
+- Modify, adapt, or create derivative works from the Software
+- Distribute, sublicense, or sell copies of the Software
+- Remove this notice from any copy of the Software
+
+The Software is provided "AS IS", without warranty of any kind, express or
+implied, including but not limited to the warranties of merchantability,
+fitness for a particular purpose and noninfringement. In no event shall the
+author be liable for any claim, damages or other liability, whether in an
+action of contract, tort or otherwise, arising from, out of or in connection
+with the Software or the use or other dealings in the Software.
+
+Third-party libraries used in this Software retain their respective licenses.
+See THIRD_PARTY_LICENSES.md for the full list.
+
+For licensing inquiries contact: @TretyakovAndy on Telegram
+or via https://andy-ndt.vercel.app/
