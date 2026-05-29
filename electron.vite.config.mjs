@@ -40,6 +40,7 @@ export default defineConfig({
           'sphere-settings': resolve(__dirname, 'src/renderer/sphere-settings.html'),
           trash: resolve(__dirname, 'src/renderer/trash.html'),
           backup: resolve(__dirname, 'src/renderer/backup.html'),
+          'ai-export': resolve(__dirname, 'src/renderer/ai-export.html'),
           about: resolve(__dirname, 'src/renderer/about.html')
         }
       }

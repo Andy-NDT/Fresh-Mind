@@ -1,35 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
 
-/*
- * ─────────────────────────────────────────────────────────────────────────
- * TODO Шаг 15 — Экспорт для ИИ-аналитики (планируется v0.2.0, через 1-2 недели)
- * ─────────────────────────────────────────────────────────────────────────
- *
- * Третья кнопка в секции "Данные" этого окна: [Экспорт для ИИ-разбора]
- *
- * Создаёт читаемый текстовый отчёт (.txt), оптимизированный для контекста LLM:
- *   • Динамика 20 сфер за выбранный период (среднее, min/max, тренд)
- *   • Топ-10 ярких записей (по pinned / эмоции / частоте сфер)
- *   • Паттерны: время записей, частые теги, частое настроение, корреляции сфер
- *   • Полный текст записей за период
- *
- * Откроется попап с:
- *   • Выбор периода (месяц / квартал / полгода / год / всё)
- *   • Кнопка [Сгенерировать отчёт] → сохраняет .txt через showSaveDialog
- *   • Готовые шаблоны промптов (5 вариантов): глубокий разбор / одна сфера /
- *     слепые пятна / сравнение периодов / свой
- *   • Кнопка [Копировать промпт] — юзер сам решает куда вставлять (любой LLM-сервис,
- *     которым он пользуется). НЕ упоминаем конкретные сервисы в UI.
- *
- * Бэкенд: новый ipcMain.handle('export-ai-report', ({ period }) → {
- *   собирает данные через уже существующие функции
- *   (listEntries, getDailyAverages, getSphereHistory, getSummaryStats),
- *   форматирует в Markdown-подобный .txt с разделами и таблицами
- * })
- *
- * Эта фича — отдельный шаг 15, НЕ блокирует релиз 0.1.0.
- * ─────────────────────────────────────────────────────────────────────────
- */
 export default function App() {
   const [status, setStatus] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -88,6 +58,17 @@ export default function App() {
       <div className="bk-header">
         <span className="bk-title">Бэкап и данные</span>
         <button className="bk-close" onClick={() => window.freshMind.closeBackup()} title="Закрыть">×</button>
+      </div>
+
+      <div className="bk-section">
+        <div className="bk-section-label">ИИ-аналитика</div>
+        <div className="bk-section-hint">Сгенерируй структурированный отчёт по записям и оценкам за выбранный период — для разбора в любом ИИ-сервисе которым пользуешься.</div>
+        <div className="bk-buttons">
+          <button className="bk-btn bk-btn-wide bk-btn-primary" onClick={() => window.freshMind.openAiExport()} title="Открыть окно экспорта для ИИ-аналитики">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6L12 3z"/><path d="M19 14l.8 2.2L22 17l-2.2.8L19 20l-.8-2.2L16 17l2.2-.8L19 14z"/><path d="M5 16l.6 1.6L7 18l-1.4.4L5 20l-.6-1.6L3 18l1.4-.4L5 16z"/></svg>
+            Экспорт для ИИ-аналитики
+          </button>
+        </div>
       </div>
 
       <div className="bk-section">

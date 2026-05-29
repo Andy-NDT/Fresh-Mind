@@ -828,3 +828,130 @@ export function getStats() {
   const tagsCount = d.prepare('SELECT COUNT(DISTINCT tag_id) as c FROM entry_tags').get().c
   return { totalEntries, pinnedEntries, spheresCount, tagsCount }
 }
+
+// Кол-во не-удалённых записей в диапазоне [startISO, endISO] (включительно по календарным дням).
+// Если startISO пустой/null — считаем «с самого начала». Если endISO пустой — «до сегодня включительно».
+export function countEntriesInRange({ startISO, endISO }) {
+  const d = getDb()
+  const startMs = startISO ? new Date(startISO + 'T00:00:00').getTime() : 0
+  const effectiveEnd = endISO || new Date().toISOString().slice(0, 10)
+  const endMs = new Date(effectiveEnd + 'T23:59:59.999').getTime()
+  return d.prepare(`
+    SELECT COUNT(*) as cnt FROM entries
+    WHERE deleted_at IS NULL AND created_at >= ? AND created_at <= ?
+  `).get(startMs, endMs).cnt
+}
+
+// ── Helpers для AI-отчёта (Step 15.4) ─────────────────────────────
+
+// Статы по каждой сфере за период: avg, min, max, кол-во оценок,
+// средние в первой/последней трети периода — для расчёта тренда.
+// Возвращает [{ id, name, color, group_id, avg, min, max, ratingsCount, firstThirdAvg, lastThirdAvg }]
+// firstThirdAvg/lastThirdAvg = null если в трети нет оценок.
+export function getSpherePeriodStats(startISO, endISO) {
+  const d = getDb()
+  // Длина периода в днях для расчёта границ третей
+  const startDate = new Date(startISO + 'T00:00:00')
+  const endDate   = new Date(endISO   + 'T00:00:00')
+  const totalDays = Math.max(1, Math.round((endDate - startDate) / 86400000) + 1)
+  const thirdLen = totalDays / 3
+  const firstEndDate = new Date(startDate.getTime() + Math.floor(thirdLen) * 86400000)
+  const lastStartDate = new Date(endDate.getTime() - Math.floor(thirdLen) * 86400000 + 86400000)
+  const firstEndISO = firstEndDate.toISOString().slice(0, 10)
+  const lastStartISO = lastStartDate.toISOString().slice(0, 10)
+
+  const rows = d.prepare(`
+    SELECT
+      s.id, s.name, s.color, s.group_id,
+      AVG(r.value)     AS avg,
+      MIN(r.value)     AS min,
+      MAX(r.value)     AS max,
+      COUNT(r.id)      AS ratingsCount
+    FROM spheres s
+    LEFT JOIN ratings r ON r.sphere_id = s.id AND r.date >= ? AND r.date <= ?
+    WHERE s.archived = 0
+    GROUP BY s.id
+    ORDER BY s.sort_order, s.id
+  `).all(startISO, endISO)
+
+  const firstStmt = d.prepare(`
+    SELECT AVG(value) AS a FROM ratings WHERE sphere_id = ? AND date >= ? AND date <= ?
+  `)
+  const lastStmt = d.prepare(`
+    SELECT AVG(value) AS a FROM ratings WHERE sphere_id = ? AND date >= ? AND date <= ?
+  `)
+
+  for (const row of rows) {
+    row.firstThirdAvg = firstStmt.get(row.id, startISO, firstEndISO).a
+    row.lastThirdAvg  = lastStmt.get(row.id, lastStartISO, endISO).a
+  }
+  return rows
+}
+
+// Все оценки по всем сферам в диапазоне, плоским списком — для расчёта корреляций.
+// Возвращает [{ sphere_id, name, color, group_id, date, value }]
+export function getRatingsByDateAcrossSpheres(startISO, endISO) {
+  return getDb().prepare(`
+    SELECT r.sphere_id, s.name, s.color, s.group_id, r.date, r.value
+    FROM ratings r
+    JOIN spheres s ON s.id = r.sphere_id
+    WHERE s.archived = 0 AND r.date >= ? AND r.date <= ?
+    ORDER BY r.date, r.sphere_id
+  `).all(startISO, endISO)
+}
+
+// Кол-во записей в 4 бакетах по часу создания (local time).
+// Возвращает { night: N, morning: N, day: N, evening: N }
+// night = 0-5, morning = 6-11, day = 12-17, evening = 18-23
+export function getTimeBuckets(startISO, endISO) {
+  const d = getDb()
+  const startMs = new Date(startISO + 'T00:00:00').getTime()
+  const endMs = new Date(endISO + 'T23:59:59.999').getTime()
+  const rows = d.prepare(`
+    SELECT CAST(strftime('%H', created_at / 1000, 'unixepoch', 'localtime') AS INTEGER) AS h, COUNT(*) AS cnt
+    FROM entries
+    WHERE deleted_at IS NULL AND created_at >= ? AND created_at <= ?
+    GROUP BY h
+  `).all(startMs, endMs)
+  const buckets = { night: 0, morning: 0, day: 0, evening: 0 }
+  for (const r of rows) {
+    if (r.h < 6)       buckets.night   += r.cnt
+    else if (r.h < 12) buckets.morning += r.cnt
+    else if (r.h < 18) buckets.day     += r.cnt
+    else               buckets.evening += r.cnt
+  }
+  return buckets
+}
+
+// Кол-во уникальных дат в периоде, в которых есть хотя бы одна оценка.
+// Используется для гейтинга секции корреляций (≥60 дней — показываем, иначе пропуск).
+export function getDaysWithRatingsCount(startISO, endISO) {
+  return getDb().prepare(`
+    SELECT COUNT(DISTINCT date) AS cnt FROM ratings
+    WHERE date >= ? AND date <= ?
+  `).get(startISO, endISO).cnt
+}
+
+// ISO-дата (YYYY-MM-DD) самой ранней не-удалённой записи. null если БД пустая.
+// Используется для разрешения периода «Всё время» в реальный диапазон.
+export function getFirstEntryDate() {
+  const d = getDb()
+  const row = d.prepare(`
+    SELECT MIN(created_at) AS m FROM entries WHERE deleted_at IS NULL
+  `).get()
+  if (!row?.m) return null
+  return new Date(row.m).toISOString().slice(0, 10)
+}
+
+// Все не-удалённые записи в диапазоне, hydrated, в хронологическом порядке (старые → новые).
+export function listEntriesInRange(startISO, endISO) {
+  const d = getDb()
+  const startMs = new Date(startISO + 'T00:00:00').getTime()
+  const endMs = new Date(endISO + 'T23:59:59.999').getTime()
+  const rows = d.prepare(`
+    SELECT * FROM entries
+    WHERE deleted_at IS NULL AND created_at >= ? AND created_at <= ?
+    ORDER BY created_at ASC
+  `).all(startMs, endMs)
+  return rows.map(hydrateEntry)
+}

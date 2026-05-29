@@ -12,8 +12,9 @@ import {
   setRating, deleteRating, getRatingsForDate, getLatestRatings, getSphereHistory, getLastRatingBefore, getEntriesForSphere, getDailyAverages, getEntryDates, getEntriesByDay, getSummaryStats, getOnThisDay,
   listTrash, exportAllData, importAllData,
   listEntries, getEntry, saveEntry, softDeleteEntry, restoreEntry, purgeEntry,
-  listTags, getStats
+  listTags, getStats, countEntriesInRange, getFirstEntryDate
 } from './db.js'
+import { generateReport } from './aiExport.js'
 
 const autoLauncher = new AutoLaunch({ name: 'Fresh Mind' })
 
@@ -53,6 +54,7 @@ let settingsWindow = null
 let sphereSettingsWindow = null
 let trashWindow = null
 let backupWindow = null
+let aiExportWindow = null
 let aboutWindow = null
 let popupReady = false
 let popupReposeInterval = null
@@ -353,6 +355,41 @@ function createBackupWindow() {
   loadRendererURL(backupWindow, 'backup.html')
   backupWindow.once('ready-to-show', () => { backupWindow.show() })
   backupWindow.on('closed', () => { backupWindow = null })
+}
+
+// --- ИИ-экспорт ---
+function createAiExportWindow() {
+  if (aiExportWindow && !aiExportWindow.isDestroyed()) {
+    aiExportWindow.show()
+    aiExportWindow.focus()
+    return
+  }
+  const parent =
+    (backupWindow && !backupWindow.isDestroyed()) ? backupWindow :
+    (settingsWindow && !settingsWindow.isDestroyed()) ? settingsWindow :
+    undefined
+  aiExportWindow = new BrowserWindow({
+    width: 380,
+    height: 620,
+    title: '',
+    icon: APP_ICON,
+    show: false,
+    resizable: true,
+    frame: false,
+    transparent: true,
+    backgroundColor: '#00000000',
+    minWidth: 360,
+    minHeight: 360,
+    parent,
+    modal: false,
+    webPreferences: {
+      preload: join(__dirname, '../preload/index.js'),
+      sandbox: false
+    }
+  })
+  loadRendererURL(aiExportWindow, 'ai-export.html')
+  aiExportWindow.once('ready-to-show', () => { aiExportWindow.show() })
+  aiExportWindow.on('closed', () => { aiExportWindow = null })
 }
 
 // --- О приложении ---
@@ -719,6 +756,43 @@ ipcMain.handle('list-tags', () => listTags())
 
 // ── Db stats ──────────────────────────────────────────────
 ipcMain.handle('get-db-stats', () => getStats())
+ipcMain.handle('count-entries-in-range', (_e, range) => countEntriesInRange(range || {}))
+ipcMain.handle('get-first-entry-date', () => getFirstEntryDate())
+
+// ── AI export (Step 15.5) ─────────────────────────────────
+ipcMain.handle('export-ai-report', async (e, { startISO, endISO, promptText } = {}) => {
+  if (!startISO || !endISO) return { error: 'Не указан период' }
+  const win = BrowserWindow.fromWebContents(e.sender)
+  const defName = `fresh-mind-report-${startISO}_to_${endISO}.txt`
+  const r = await dialog.showSaveDialog(win, {
+    title: 'Сохранить отчёт для ИИ-аналитики',
+    defaultPath: defName,
+    filters: [{ name: 'Текстовый файл', extensions: ['txt'] }]
+  })
+  if (r.canceled || !r.filePath) return { canceled: true }
+
+  const stream = fs.createWriteStream(r.filePath, { encoding: 'utf8' })
+  try {
+    const stats = await generateReport({ startISO, endISO, promptText }, stream)
+    await new Promise((resolve, reject) => {
+      stream.end((err) => err ? reject(err) : resolve())
+    })
+    const size = fs.statSync(r.filePath).size
+    return {
+      ok: true,
+      path: r.filePath,
+      entries: stats.entriesCount,
+      ratings: stats.ratingsCount,
+      correlationsShown: stats.correlationsShown,
+      promptIncluded: stats.promptIncluded,
+      sizeKB: Math.round(size / 1024)
+    }
+  } catch (err) {
+    try { stream.destroy() } catch {}
+    try { fs.unlinkSync(r.filePath) } catch {}
+    return { error: err.message || String(err) }
+  }
+})
 
 ipcMain.on('quit-app', () => {
   app.isQuitting = true
@@ -802,6 +876,19 @@ ipcMain.on('resize-backup', (_e, height) => {
     const screenH = screen.getPrimaryDisplay().workAreaSize.height
     const maxH = Math.max(420, screenH - 40)
     backupWindow.setSize(w, Math.max(240, Math.min(maxH, Math.ceil(height) + 4)))
+  }
+})
+
+ipcMain.on('open-ai-export', () => createAiExportWindow())
+ipcMain.on('close-ai-export', () => {
+  if (aiExportWindow && !aiExportWindow.isDestroyed()) aiExportWindow.close()
+})
+ipcMain.on('resize-ai-export', (_e, height) => {
+  if (aiExportWindow && !aiExportWindow.isDestroyed()) {
+    const [w] = aiExportWindow.getSize()
+    const screenH = screen.getPrimaryDisplay().workAreaSize.height
+    const maxH = Math.max(420, screenH - 40)
+    aiExportWindow.setSize(w, Math.max(260, Math.min(maxH, Math.ceil(height) + 4)))
   }
 })
 

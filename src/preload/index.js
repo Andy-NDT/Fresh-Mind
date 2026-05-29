@@ -30,6 +30,9 @@ contextBridge.exposeInMainWorld('freshMind', {
   openBackup: () => ipcRenderer.send('open-backup'),
   closeBackup: () => ipcRenderer.send('close-backup'),
   resizeBackup: (h) => ipcRenderer.send('resize-backup', h),
+  openAiExport: () => ipcRenderer.send('open-ai-export'),
+  closeAiExport: () => ipcRenderer.send('close-ai-export'),
+  resizeAiExport: (h) => ipcRenderer.send('resize-ai-export', h),
   openAbout: () => ipcRenderer.send('open-about'),
   closeAbout: () => ipcRenderer.send('close-about'),
   resizeAbout: (h) => ipcRenderer.send('resize-about', h),
@@ -87,5 +90,10 @@ contextBridge.exposeInMainWorld('freshMind', {
   listTags: () => ipcRenderer.invoke('list-tags'),
 
   // Db stats
-  getDbStats: () => ipcRenderer.invoke('get-db-stats')
+  getDbStats: () => ipcRenderer.invoke('get-db-stats'),
+  countEntriesInRange: (range) => ipcRenderer.invoke('count-entries-in-range', range),
+  getFirstEntryDate: () => ipcRenderer.invoke('get-first-entry-date'),
+
+  // AI export
+  exportAiReport: (range) => ipcRenderer.invoke('export-ai-report', range)
 })
