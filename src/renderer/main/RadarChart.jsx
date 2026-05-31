@@ -434,8 +434,32 @@ export default function RadarChart({ date: dateProp, onDateChange, onSphereDetai
         </g>
       </svg>
 
+      {!hideHint && (
+        <div className="radar-hint">
+          {activeSphereId
+            ? 'выбери уровень от центра · ↶ отменить'
+            : Object.keys(ratings).length === 0
+              ? 'нажми на любую сферу, чтобы поставить первую оценку'
+              : 'ЛКМ — оценка · ПКМ — детали'}
+        </div>
+      )}
       <div className="radar-meta">
         <div className="radar-datebar">
+          <button
+            className="radar-datepicker"
+            onClick={(e) => {
+              const bar = e.currentTarget.parentElement
+              const inp = bar.querySelector('input[type="date"]')
+              if (inp && inp.showPicker) inp.showPicker()
+              else if (inp) inp.focus()
+            }}
+            title="Открыть календарь"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+              <rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="1.6"/>
+              <path d="M3 9h18M8 3v4M16 3v4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+            </svg>
+          </button>
           <button
             className="radar-datebtn"
             onClick={() => changeDate(shiftDate(date, -1))}
@@ -454,34 +478,22 @@ export default function RadarChart({ date: dateProp, onDateChange, onSphereDetai
             disabled={isToday}
             title="Следующий день"
           >›</button>
+          <button
+            className="radar-dateundo"
+            onClick={undo}
+            disabled={undoStack.length === 0}
+            title={undoStack.length === 0
+              ? 'Нечего отменять'
+              : `Отменить оценку${undoStack.length > 1 ? ` (в очереди: ${undoStack.length})` : ''}`}
+          >↶</button>
+        </div>
+        <div className="radar-datebar-secondary">
           {!isToday && (
             <button
               className="radar-datetoday"
               onClick={() => changeDate(today)}
               title="Сегодня"
             >сегодня</button>
-          )}
-          <button
-            className="radar-datepicker"
-            onClick={(e) => {
-              const bar = e.currentTarget.parentElement
-              const inp = bar.querySelector('input[type="date"]')
-              if (inp && inp.showPicker) inp.showPicker()
-              else if (inp) inp.focus()
-            }}
-            title="Открыть календарь"
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-              <rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="1.6"/>
-              <path d="M3 9h18M8 3v4M16 3v4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-            </svg>
-          </button>
-          {undoStack.length > 0 && (
-            <button
-              className="radar-dateundo"
-              onClick={undo}
-              title={`Отменить (${undoStack.length})`}
-            >↶</button>
           )}
           {onCompareToggle && !comparePresets && (
             <button
@@ -501,15 +513,6 @@ export default function RadarChart({ date: dateProp, onDateChange, onSphereDetai
             </span>
           )}
         </div>
-        {!hideHint && (
-          <div className="radar-hint">
-            {activeSphereId
-              ? 'выбери уровень от центра · ↶ отменить'
-              : Object.keys(ratings).length === 0
-                ? 'нажми на любую сферу, чтобы поставить первую оценку'
-                : 'ЛКМ — оценка · ПКМ — детали'}
-          </div>
-        )}
       </div>
     </div>
   )

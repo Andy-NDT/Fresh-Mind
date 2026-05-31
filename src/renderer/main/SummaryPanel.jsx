@@ -32,7 +32,7 @@ function nextPeriod(mode, year, month) {
 
 function periodLabel(mode, year, month) {
   if (mode === 'year') return `${year}`
-  return `${MONTH_NAMES[month]} ${year}`
+  return `${MONTH_NAMES[month].toLowerCase()}, ${year}`
 }
 
 function periodLabelGen(mode, year, month) {
@@ -97,12 +97,18 @@ export default function SummaryPanel({ refreshKey = 0 }) {
 
   return (
     <div className={`summary-panel ${expanded ? 'is-expanded' : ''}`}>
-      <button
+      <div
         className="sp-header"
+        role="button"
+        tabIndex={0}
         onClick={() => setExpanded(v => !v)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpanded(v => !v) } }}
         title={expanded ? 'Свернуть сводку' : 'Развернуть сводку за период'}
       >
-        <span className="sp-title">Сводка за {periodLabel(mode, year, month).toLowerCase()}</span>
+        <span className="sp-title">
+          <span className="sp-title-strong">Сводка</span>
+          <span className="sp-title-meta">{periodLabel(mode, year, month)}</span>
+        </span>
         <div className="sp-period-ctrls" onClick={e => e.stopPropagation()}>
           <button
             className={`sp-mode-btn ${mode === 'month' ? 'on' : ''}`}
@@ -120,14 +126,7 @@ export default function SummaryPanel({ refreshKey = 0 }) {
             title="Следующий период"
           >›</button>
         </div>
-        <svg
-          className="sp-chevron"
-          width="12" height="12" viewBox="0 0 12 12"
-          style={{ transform: expanded ? 'rotate(180deg)' : '' }}
-        >
-          <path d="M3 4.5l3 3 3-3" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      </button>
+      </div>
 
       {expanded && (
         <div className="sp-body">

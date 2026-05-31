@@ -372,7 +372,7 @@ export default function App() {
         />
 
         <div className="section-divider">
-          <span className="section-label">Общая средняя</span>
+          <span className="section-label">Динамика</span>
         </div>
 
         <TrendBlock date={date} refreshKey={savedCount} />

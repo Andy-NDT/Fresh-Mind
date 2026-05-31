@@ -9,10 +9,11 @@ import { loadJSON, saveJSON } from './store.js'
 import {
   listGroups, saveGroup, deleteGroup,
   listSpheres, saveSphere, deleteSphere, reorderSpheres,
-  setRating, deleteRating, getRatingsForDate, getLatestRatings, getSphereHistory, getLastRatingBefore, getEntriesForSphere, getDailyAverages, getEntryDates, getEntriesByDay, getSummaryStats, getOnThisDay,
+  setRating, deleteRating, getRatingsForDate, getLatestRatings, getSphereHistory, getLastRatingBefore, getLastRatingsBefore, getEntriesForSphere, getDailyAverages, getEntryDates, getEntriesByDay, getSummaryStats, getOnThisDay,
   listTrash, exportAllData, importAllData,
   listEntries, getEntry, saveEntry, softDeleteEntry, restoreEntry, purgeEntry,
-  listTags, getStats, countEntriesInRange, getFirstEntryDate
+  listTags, getStats, countEntriesInRange, getFirstEntryDate,
+  getWeeklyAverages, getWeeklyEntryStats
 } from './db.js'
 import { generateReport } from './aiExport.js'
 
@@ -164,6 +165,7 @@ function createMainWindow() {
     alwaysOnTop: true,
     skipTaskbar: true,
     resizable: true,
+    roundedCorners: true, // Win11 native rounded corners (ignored на Win10/older)
     show: false,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -596,6 +598,7 @@ ipcMain.handle('delete-rating', (_e, sphereId, date) => {
   return true
 })
 ipcMain.handle('get-last-rating-before', (_e, sphereId, date) => getLastRatingBefore(sphereId, date))
+ipcMain.handle('get-last-ratings-before', (_e, date) => getLastRatingsBefore(date))
 ipcMain.handle('get-entries-for-sphere', (_e, sphereId, limit) => getEntriesForSphere(sphereId, limit))
 ipcMain.handle('get-daily-averages', (_e, startDate, endDate) => getDailyAverages(startDate, endDate))
 ipcMain.handle('get-entry-dates', (_e, startDate, endDate) => getEntryDates(startDate, endDate))
@@ -758,6 +761,8 @@ ipcMain.handle('list-tags', () => listTags())
 ipcMain.handle('get-db-stats', () => getStats())
 ipcMain.handle('count-entries-in-range', (_e, range) => countEntriesInRange(range || {}))
 ipcMain.handle('get-first-entry-date', () => getFirstEntryDate())
+ipcMain.handle('get-weekly-averages', (_e, startISO, endISO) => getWeeklyAverages(startISO, endISO))
+ipcMain.handle('get-weekly-entry-stats', (_e, startISO, endISO) => getWeeklyEntryStats(startISO, endISO))
 
 // ── AI export (Step 15.5) ─────────────────────────────────
 ipcMain.handle('export-ai-report', async (e, { startISO, endISO, promptText } = {}) => {

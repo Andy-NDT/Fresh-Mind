@@ -14,11 +14,12 @@
 }
 
 .sp-header {
+  position: relative;
   width: 100%;
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 7px 10px 7px 12px;
+  padding: 7px 22px 7px 12px;
   background: transparent;
   border: none;
   cursor: pointer;
@@ -26,15 +27,63 @@
   text-align: left;
   transition: background var(--fm-transition);
 }
+/* Hover-индикатор «развернуть/свернуть» — chevron справа, показывается только при hover. */
+.sp-header::after {
+  content: '›';
+  position: absolute;
+  right: 9px;
+  top: 50%;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--fm-text-muted);
+  line-height: 1;
+  transform: translateY(-55%) rotate(90deg);
+  opacity: 0;
+  transition: opacity 150ms ease-out, transform 200ms ease-out;
+  pointer-events: none;
+}
+.summary-panel.is-expanded .sp-header::after {
+  transform: translateY(-55%) rotate(-90deg);
+}
+.sp-header:hover::after { opacity: 0.55; }
+.sp-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+.sp-title-meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.sp-period-ctrls { flex-shrink: 0; }
+.sp-mode-btn { flex-shrink: 0; }
+.sp-nav-btn { flex-shrink: 0; }
 .sp-header:hover { background: var(--fm-bg-soft); }
 
 .sp-title {
-  font-size: 11.5px;
-  font-weight: 700;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  font-size: clamp(9px, 1.7vw, 11.5px);
   color: var(--fm-deep);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: clamp(0.15px, 0.15vw, 0.5px);
   flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.sp-title-strong {
+  font-weight: 600;
+}
+.sp-title-meta {
+  font-weight: 500;
+  opacity: 0.78;
+  letter-spacing: inherit;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .sp-period-ctrls {
@@ -79,30 +128,6 @@
 }
 .sp-nav-btn:hover:not(:disabled) { background: var(--fm-hover); }
 .sp-nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-
-.sp-chevron {
-  width: 22px;
-  height: 22px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--fm-main);
-  color: white;
-  border-radius: 50%;
-  padding: 4px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-  transition: transform 220ms ease, background 200ms;
-  flex-shrink: 0;
-}
-.summary-panel:not(.is-expanded) .sp-header:hover .sp-chevron {
-  background: var(--fm-deep);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-}
-.summary-panel.is-expanded .sp-chevron {
-  background: var(--fm-bg-soft);
-  color: var(--fm-deep);
-  box-shadow: none;
-}
 
 /* ── Body ───────────────────────────────────────────── */
 .sp-body {
@@ -241,27 +266,44 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Настроения */
+/* Настроения — компактно как реакции в телеграм, в одну линию,
+   горизонтальный скролл если эмодзи много. */
 .sp-moods {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  flex-wrap: nowrap;
+  gap: 4px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  padding-bottom: 2px;
 }
+.sp-moods::-webkit-scrollbar {
+  height: 4px;
+}
+.sp-moods::-webkit-scrollbar-thumb {
+  background: rgba(155, 123, 217, 0.28);
+  border-radius: 2px;
+}
+.sp-moods::-webkit-scrollbar-track { background: transparent; }
+
 .sp-mood {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 2px 7px 2px 5px;
+  gap: 3px;
+  padding: 1.5px 7px 1.5px 5px;
   background: var(--fm-bg-soft);
   border: 1px solid var(--fm-border-soft);
   border-radius: 10px;
   font-size: 11px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
-.sp-mood-emoji { font-size: 14px; line-height: 1; }
+.sp-mood-emoji { font-size: 13px; line-height: 1; }
 .sp-mood-cnt {
   font-weight: 700;
   color: var(--fm-deep);
   font-variant-numeric: tabular-nums;
+  letter-spacing: 0.2px;
 }
 
 /* Сферы */

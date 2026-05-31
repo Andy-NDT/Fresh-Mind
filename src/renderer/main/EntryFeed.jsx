@@ -30,7 +30,13 @@ function formatDateTime(ts) {
 
 function previewFromText(text, maxChars = 220) {
   if (!text) return ''
-  const cleaned = text.trim().replace(/\s+/g, ' ')
+  // Сжимаем только горизонтальные пробелы/табы, СОХРАНЯЕМ переводы строк (абзацы).
+  // Подряд идущие пустые строки нормализуем до одной пустой между абзацами.
+  const cleaned = text
+    .replace(/[ \t]+/g, ' ')
+    .replace(/[ \t]*\n[ \t]*/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
   if (cleaned.length <= maxChars) return cleaned
   return cleaned.slice(0, maxChars - 1).trimEnd() + '…'
 }
@@ -114,7 +120,8 @@ function EntryCard({ entry, sphereGroups, onTogglePinned, onDelete, onSaveEdit, 
   }
 
   function onEditKeyDown(e) {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); commitEdit() }
+    // Enter — сохранить; Shift+Enter — перенос строки (стандартное поведение textarea)
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitEdit() }
     else if (e.key === 'Escape') { e.preventDefault(); cancelEdit() }
   }
 
@@ -165,7 +172,14 @@ function EntryCard({ entry, sphereGroups, onTogglePinned, onDelete, onSaveEdit, 
         )}
       </div>
 
-      {entry.spheres && entry.spheres.length > 0 && (
+      {editing && (
+        <div className="ef-edit-topbar">
+          <button className="ef-edit-btn ef-edit-cancel" onClick={cancelEdit} title="Esc">Отмена</button>
+          <button className="ef-edit-btn ef-edit-save" onClick={commitEdit} title="Enter">Сохранить</button>
+        </div>
+      )}
+
+      {entry.spheres && entry.spheres.length > 0 && !editing && (
         <div className="ef-spheres">
           {entry.spheres.map(s => (
             <span key={s.id} className="ef-sphere-chip" style={{ borderColor: s.color, background: s.color + '22' }}>
@@ -249,11 +263,6 @@ function EntryCard({ entry, sphereGroups, onTogglePinned, onDelete, onSaveEdit, 
             </div>
           )}
 
-          <div className="ef-edit-actions">
-            <span className="ef-edit-hint">Ctrl+Enter — сохранить · Esc — отмена</span>
-            <button className="ef-edit-btn ef-edit-cancel" onClick={cancelEdit} title="Esc">Отмена</button>
-            <button className="ef-edit-btn ef-edit-save" onClick={commitEdit} title="Ctrl+Enter">Сохранить</button>
-          </div>
         </>
       ) : (
         <>
@@ -313,6 +322,10 @@ export default function EntryFeed({ refreshKey = 0 }) {
   const [expandedId, setExpandedId] = useState(null)
   const [search, setSearch] = useState('')
   const [pinnedOnly, setPinnedOnly] = useState(false)
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const [dateFilterOpen, setDateFilterOpen] = useState(false)
+  const dateFilterRef = useRef(null)
   const [lightboxSrc, setLightboxSrc] = useState(null)
   const [selectedYear, setSelectedYear] = useState(null) // null = все годы
   const [collapsedMonths, setCollapsedMonths] = useState(() => new Set())
@@ -375,6 +388,11 @@ export default function EntryFeed({ refreshKey = 0 }) {
     if (selectedYear) {
       filtered = filtered.filter(e => new Date(e.created_at).getFullYear() === selectedYear)
     }
+    if (dateFrom || dateTo) {
+      const fromMs = dateFrom ? new Date(dateFrom + 'T00:00:00').getTime() : 0
+      const toMs = dateTo ? new Date(dateTo + 'T23:59:59.999').getTime() : Number.POSITIVE_INFINITY
+      filtered = filtered.filter(e => e.created_at >= fromMs && e.created_at <= toMs)
+    }
     if (search.trim()) {
       const q = search.toLowerCase()
       filtered = filtered.filter(e => {
@@ -388,7 +406,19 @@ export default function EntryFeed({ refreshKey = 0 }) {
       pinned: filtered.filter(e => e.pinned),
       regular: filtered.filter(e => !e.pinned)
     }
-  }, [entries, search, pinnedOnly, selectedYear])
+  }, [entries, search, pinnedOnly, selectedYear, dateFrom, dateTo])
+
+  // Закрывать popover при клике вне него
+  useEffect(() => {
+    if (!dateFilterOpen) return
+    function onMouseDown(e) {
+      if (dateFilterRef.current && !dateFilterRef.current.contains(e.target)) {
+        setDateFilterOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', onMouseDown)
+    return () => document.removeEventListener('mousedown', onMouseDown)
+  }, [dateFilterOpen])
 
   // Группировка обычных записей по «YYYY-MM», новые группы сверху
   const groupedByMonth = useMemo(() => {
@@ -515,6 +545,62 @@ export default function EntryFeed({ refreshKey = 0 }) {
           </svg>
           {totalPinned > 0 && <span className="ef-pin-count">{totalPinned}</span>}
         </button>
+        <div className="ef-date-filter" ref={dateFilterRef}>
+          <button
+            className={`ef-date-btn ${(dateFrom || dateTo) ? 'on' : ''}`}
+            onClick={() => setDateFilterOpen(v => !v)}
+            title={(dateFrom || dateTo)
+              ? `Период: ${dateFrom || '…'} — ${dateTo || '…'}`
+              : 'Фильтр по диапазону дат'}
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2"/>
+              <line x1="16" y1="2" x2="16" y2="6"/>
+              <line x1="8" y1="2" x2="8" y2="6"/>
+              <line x1="3" y1="10" x2="21" y2="10"/>
+            </svg>
+            {(dateFrom || dateTo) && <span className="ef-date-dot" />}
+          </button>
+          {dateFilterOpen && (
+            <div className="ef-date-popover">
+              <div className="ef-date-row">
+                <span className="ef-date-label">От</span>
+                <input
+                  type="date"
+                  value={dateFrom}
+                  min="2000-01-01"
+                  max={dateTo || '9999-12-31'}
+                  onChange={e => {
+                    const v = e.target.value
+                    // Ограничиваем год 4 цифрами (date-input может принять 5-6 цифр год — отсекаем)
+                    if (v && /^\d{4}-\d{2}-\d{2}$/.test(v)) setDateFrom(v)
+                    else if (!v) setDateFrom('')
+                  }}
+                />
+              </div>
+              <div className="ef-date-row">
+                <span className="ef-date-label">До</span>
+                <input
+                  type="date"
+                  value={dateTo}
+                  min={dateFrom || '2000-01-01'}
+                  max="9999-12-31"
+                  onChange={e => {
+                    const v = e.target.value
+                    if (v && /^\d{4}-\d{2}-\d{2}$/.test(v)) setDateTo(v)
+                    else if (!v) setDateTo('')
+                  }}
+                />
+              </div>
+              {(dateFrom || dateTo) && (
+                <button
+                  className="ef-date-reset"
+                  onClick={() => { setDateFrom(''); setDateTo('') }}
+                >Сбросить</button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {loading && <div className="ef-loading fm-pulse">Загружаю записи</div>}

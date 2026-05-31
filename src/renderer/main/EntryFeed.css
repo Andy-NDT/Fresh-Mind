@@ -18,14 +18,15 @@
 .ef-search {
   width: 100%;
   border: 1px solid var(--fm-border-soft);
-  background: var(--fm-bg-card);
+  background: white;
   color: var(--fm-text);
   font-family: var(--fm-font);
   font-size: 12.5px;
   border-radius: 10px;
   padding: 7px 26px 7px 12px;
   outline: none;
-  transition: border-color var(--fm-transition);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: border-color var(--fm-transition), box-shadow var(--fm-transition);
 }
 .ef-search:focus { border-color: var(--fm-main); background: white; }
 
@@ -87,6 +88,115 @@
 .ef-pin-filter:not(.on) .ef-pin-count {
   background: var(--fm-hover-soft);
   color: var(--fm-deep);
+}
+
+/* Фильтр по диапазону дат — кнопка-календарь + всплывающий popover */
+.ef-date-filter {
+  position: relative;
+}
+.ef-date-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--fm-border-soft);
+  background: var(--fm-bg-card);
+  color: var(--fm-text-soft);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all var(--fm-transition);
+}
+.ef-date-btn:hover {
+  background: var(--fm-hover);
+  color: var(--fm-deep);
+  border-color: var(--fm-border-hover);
+}
+.ef-date-btn.on {
+  background: var(--fm-main);
+  color: white;
+  border-color: var(--fm-main);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+.ef-date-dot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #FFD27A;
+  box-shadow: 0 0 0 1.5px var(--fm-main);
+}
+
+.ef-date-popover {
+  position: absolute;
+  top: calc(100% + 5px);
+  right: 0;
+  z-index: 30;
+  background: white;
+  border: 1px solid var(--fm-border-soft);
+  border-radius: 12px;
+  padding: 10px 11px 10px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.14);
+  min-width: 220px;
+  animation: efDatePopIn 140ms ease-out;
+}
+@keyframes efDatePopIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.ef-date-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.ef-date-row:last-of-type { margin-bottom: 0; }
+.ef-date-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--fm-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  width: 22px;
+  flex-shrink: 0;
+}
+.ef-date-row input[type="date"] {
+  flex: 1;
+  padding: 5px 7px;
+  font-size: 12px;
+  font-family: var(--fm-font);
+  color: var(--fm-text);
+  background: var(--fm-bg-card);
+  border: 1px solid var(--fm-border-soft);
+  border-radius: 6px;
+  outline: none;
+  transition: border-color var(--fm-transition);
+}
+.ef-date-row input[type="date"]:focus {
+  border-color: var(--fm-main);
+  background: white;
+}
+.ef-date-reset {
+  margin-top: 8px;
+  width: 100%;
+  padding: 5px 10px;
+  background: var(--fm-bg-soft);
+  border: 1px solid var(--fm-border-soft);
+  color: var(--fm-deep);
+  font-size: 11.5px;
+  font-weight: 600;
+  font-family: var(--fm-font);
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all var(--fm-transition);
+}
+.ef-date-reset:hover {
+  background: var(--fm-hover);
+  border-color: var(--fm-border-hover);
 }
 
 .ef-section-label {
@@ -183,12 +293,12 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 10px;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  border: 1px solid var(--fm-border-soft);
-  border-radius: 10px;
+  padding: 10px 4px 6px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--fm-border-soft);
+  border-radius: 0;
+  outline: none;
   cursor: pointer;
   font-family: var(--fm-font);
   text-align: left;
@@ -196,17 +306,21 @@
   transition: background var(--fm-transition), border-color var(--fm-transition);
 }
 .ef-month-header:hover {
-  background: rgba(255, 255, 255, 0.95);
-  border-color: var(--fm-border-hover);
+  background: var(--fm-bg-soft);
+}
+.ef-month-header:focus-visible {
+  outline: 2px solid var(--fm-main);
+  outline-offset: -2px;
+  border-radius: 4px;
 }
 .ef-month-header.is-collapsed {
-  background: var(--fm-bg-soft);
+  opacity: 0.75;
 }
 
 .ef-month-name {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
-  color: var(--fm-deep);
+  color: var(--fm-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.6px;
   flex: 1;
@@ -214,11 +328,10 @@
 
 .ef-month-count {
   font-size: 10.5px;
-  font-weight: 700;
-  padding: 1px 7px;
-  background: var(--fm-hover-soft);
-  color: var(--fm-deep);
-  border-radius: 6px;
+  font-weight: 600;
+  padding: 0 4px;
+  background: transparent;
+  color: var(--fm-text-faint);
   font-variant-numeric: tabular-nums;
 }
 
@@ -595,18 +708,12 @@
   margin-top: 5px;
 }
 
-.ef-edit-actions {
+/* Верхний бар в edit-режиме: Отмена + Сохранить справа, над textarea */
+.ef-edit-topbar {
   display: flex;
-  align-items: center;
+  justify-content: flex-end;
   gap: 6px;
-  margin-top: 6px;
-}
-
-.ef-edit-hint {
-  flex: 1;
-  font-size: 10px;
-  color: var(--fm-text-faint);
-  font-style: italic;
+  margin-bottom: 6px;
 }
 
 .ef-edit-btn {

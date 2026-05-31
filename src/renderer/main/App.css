@@ -242,9 +242,9 @@ html, body {
 .section-divider-spaced { margin-top: 22px; }
 
 .section-label {
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 700;
-  color: var(--fm-text-muted);
+  color: var(--fm-deep);
   text-transform: uppercase;
   letter-spacing: 1.2px;
   white-space: nowrap;
@@ -402,7 +402,7 @@ html, body {
   .titlebar { height: 50px; padding: 0 10px 0 14px; }
   .section-divider { margin: 20px auto 4px; }
   .section-divider-first { margin-top: 2px; }
-  .section-label { font-size: 10.5px; letter-spacing: 1px; }
+  .section-label { font-size: 11px; letter-spacing: 1px; }
 }
 
 @media (max-width: 980px) {
@@ -413,7 +413,7 @@ html, body {
   .titlebar-sub { font-size: 11px; }
   .section-divider { margin: 18px auto 3px; }
   .section-divider-first { margin-top: 2px; }
-  .section-label { font-size: 10px; letter-spacing: 0.8px; }
+  .section-label { font-size: 10.5px; letter-spacing: 0.8px; }
 }
 
 /* На самой минимальной ширине (компакт-попап) подзаголовок прячем */

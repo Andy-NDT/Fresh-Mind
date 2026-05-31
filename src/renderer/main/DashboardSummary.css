@@ -143,6 +143,18 @@
   color: var(--fm-deep);
 }
 
+/* Дельта рядом со sphere-числом в Выше всех / Ниже всех */
+.ds-spheredelta {
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  margin-left: 6px;
+  letter-spacing: 0.1px;
+}
+.ds-spheredelta.pos { color: #2E9D5C; }
+.ds-spheredelta.neg { color: #D9594C; }
+.ds-spheredelta.stable { color: var(--fm-text-faint); }
+
 .ds-dot {
   width: 9px;
   height: 9px;

@@ -102,7 +102,8 @@
   margin-left: 4px;
   transition: all var(--fm-transition);
 }
-.radar-dateundo:hover { background: var(--fm-hover); }
+.radar-dateundo:hover:not(:disabled) { background: var(--fm-hover); }
+.radar-dateundo:disabled { opacity: 0.35; cursor: not-allowed; }
 
 
 .radar-label-text {
@@ -147,6 +148,15 @@
   gap: 2px;
   flex-wrap: wrap;
 }
+.radar-datebar-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+.radar-datebar-secondary:empty { display: none; }
 
 .radar-datebtn {
   width: 26px;
@@ -176,6 +186,7 @@
   padding: 2px 2px;
   cursor: pointer;
   font-variant-numeric: tabular-nums;
+  text-align: center;
   width: 86px;
   outline: none;
 }
@@ -257,6 +268,8 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  margin-top: -8px;     /* подсадить ближе к колесу */
+  margin-bottom: 10px;  /* отделить от блока с датой */
 }
 
 .radar-empty {

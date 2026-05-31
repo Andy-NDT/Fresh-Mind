@@ -36,9 +36,18 @@ function RollingNumber({ value, format = (v) => v.toFixed(1), duration = 400 }) 
   return <>{format(shown)}</>
 }
 
-function aggregate(spheres, groups, ratings) {
+function aggregate(spheres, groups, ratings, yesterdayRatings = [], fallbackRatings = []) {
   const groupByName = new Map(groups.map(g => [g.name?.trim(), g]))
   const ratingMap = new Map(ratings.map(r => [r.sphere_id, r.value]))
+  const yesterdayMap = new Map(yesterdayRatings.map(r => [r.sphere_id, r.value]))
+  const fallbackMap = new Map(fallbackRatings.map(r => [r.sphere_id, { value: r.value, date: r.date }]))
+  function deltaFor(sphereId, todayValue) {
+    const y = yesterdayMap.get(sphereId)
+    if (y != null) return { delta: todayValue - y, sinceLabel: 'вчера' }
+    const fb = fallbackMap.get(sphereId)
+    if (fb && fb.value != null) return { delta: todayValue - fb.value, sinceLabel: fb.date }
+    return null
+  }
 
   const canonicalSpheres = []
   for (const groupName of CANONICAL_GROUPS) {
@@ -68,31 +77,61 @@ function aggregate(spheres, groups, ratings) {
     .map(s => ({ ...s, value: ratingMap.get(s.id) }))
 
   const sorted = [...rated].sort((a, b) => b.value - a.value)
+  const highestRaw = sorted[0] ?? null
+  const lowestRaw = sorted.length > 1 ? sorted[sorted.length - 1] : null
   return {
     groupStats,
     todayCount: rated.length,
     totalCount: canonicalSpheres.length,
-    highest: sorted[0] ?? null,
-    lowest: sorted.length > 1 ? sorted[sorted.length - 1] : null,
+    highest: highestRaw ? { ...highestRaw, delta: deltaFor(highestRaw.id, highestRaw.value) } : null,
+    lowest: lowestRaw ? { ...lowestRaw, delta: deltaFor(lowestRaw.id, lowestRaw.value) } : null,
     overallAvg: rated.length ? rated.reduce((s, x) => s + x.value, 0) / rated.length : null
   }
+}
+
+// Хелпер для отрисовки дельты в плитках Выше всех / Ниже всех
+function renderDelta(deltaObj) {
+  if (deltaObj == null) {
+    return <span className="ds-spheredelta stable" title="Нет предыдущих оценок">—</span>
+  }
+  const { delta, sinceLabel } = deltaObj
+  const title = `Изменение с ${sinceLabel}`
+  if (Math.abs(delta) < 0.1) {
+    return <span className="ds-spheredelta stable" title={title}>=</span>
+  }
+  const sign = delta > 0 ? '↑ +' : '↓ '
+  const cls = delta > 0 ? 'pos' : 'neg'
+  return <span className={`ds-spheredelta ${cls}`} title={title}>{sign}{Math.abs(delta).toFixed(1)}</span>
+}
+
+function shiftDateStrLocal(iso, deltaDays) {
+  const [y, m, d] = iso.split('-').map(Number)
+  const nx = new Date(y, m - 1, d + deltaDays)
+  return `${nx.getFullYear()}-${String(nx.getMonth() + 1).padStart(2, '0')}-${String(nx.getDate()).padStart(2, '0')}`
 }
 
 export default function DashboardSummary({ date = todayISO(), compareDate = null, refreshKey = 0 }) {
   const [spheres, setSpheres] = useState([])
   const [groups, setGroups] = useState([])
   const [ratings, setRatings] = useState([])
+  const [yesterdayRatings, setYesterdayRatings] = useState([])
+  const [fallbackRatings, setFallbackRatings] = useState([])
   const [compareRatings, setCompareRatings] = useState([])
 
   useEffect(() => {
+    const yesterday = shiftDateStrLocal(date, -1)
     Promise.all([
       window.freshMind.getSpheres(),
       window.freshMind.getGroups(),
-      window.freshMind.getRatingsForDate(date)
-    ]).then(([sphs, grps, rs]) => {
+      window.freshMind.getRatingsForDate(date),
+      window.freshMind.getRatingsForDate(yesterday),
+      window.freshMind.getLastRatingsBefore(date)
+    ]).then(([sphs, grps, rs, yrs, fbs]) => {
       setSpheres((sphs || []).filter(s => !s.archived))
       setGroups(grps || [])
       setRatings(rs || [])
+      setYesterdayRatings(yrs || [])
+      setFallbackRatings(fbs || [])
     })
   }, [date, refreshKey])
 
@@ -101,7 +140,10 @@ export default function DashboardSummary({ date = todayISO(), compareDate = null
     window.freshMind.getRatingsForDate(compareDate).then(rs => setCompareRatings(rs || []))
   }, [compareDate, refreshKey])
 
-  const main = useMemo(() => spheres.length ? aggregate(spheres, groups, ratings) : null, [spheres, groups, ratings])
+  const main = useMemo(
+    () => spheres.length ? aggregate(spheres, groups, ratings, yesterdayRatings, fallbackRatings) : null,
+    [spheres, groups, ratings, yesterdayRatings, fallbackRatings]
+  )
   const cmp = useMemo(
     () => compareDate && spheres.length ? aggregate(spheres, groups, compareRatings) : null,
     [compareDate, spheres, groups, compareRatings]
@@ -149,7 +191,7 @@ export default function DashboardSummary({ date = todayISO(), compareDate = null
       {/* 4 метрики дня */}
       <div className="ds-row ds-metrics">
         <div className="ds-metric-tile">
-          <div className="ds-metric-label">Отмечено сегодня</div>
+          <div className="ds-metric-label">Отмечено сфер</div>
           <div className="ds-metric-value">
             {main.todayCount}<span className="ds-metric-of">/{main.totalCount}</span>
           </div>
@@ -168,6 +210,7 @@ export default function DashboardSummary({ date = todayISO(), compareDate = null
                 <span className="ds-dot" style={{ background: main.highest.color }} />
                 <span className="ds-metric-name">{main.highest.name}</span>
                 <span className="ds-metric-num">{main.highest.value}</span>
+                {renderDelta(main.highest.delta)}
               </>
             ) : '—'}
           </div>
@@ -180,6 +223,7 @@ export default function DashboardSummary({ date = todayISO(), compareDate = null
                 <span className="ds-dot" style={{ background: main.lowest.color }} />
                 <span className="ds-metric-name">{main.lowest.name}</span>
                 <span className="ds-metric-num">{main.lowest.value}</span>
+                {renderDelta(main.lowest.delta)}
               </>
             ) : '—'}
           </div>

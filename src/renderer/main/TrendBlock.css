@@ -1,11 +1,11 @@
 .trend-block {
   width: 100%;
   max-width: 720px;
-  margin: 4px auto 24px;
+  margin: 4px auto 6px;
   background: var(--fm-bg-card);
   border: 1px solid var(--fm-border-soft);
   border-radius: 10px;
-  padding: 12px 16px 8px;
+  padding: 12px 14px 8px;
   font-family: var(--fm-font);
   display: flex;
   flex-direction: column;
@@ -16,7 +16,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 6px;
+  min-width: 0;
+}
+.trend-tabs {
+  display: flex;
+  gap: 3px;
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 .trend-title {
@@ -27,13 +34,9 @@
   letter-spacing: 0.6px;
 }
 
-.trend-tabs {
-  display: flex;
-  gap: 4px;
-}
 
 .trend-tab {
-  padding: 3px 10px;
+  padding: 3px 0;
   border: 1px solid var(--fm-border-soft);
   background: transparent;
   color: var(--fm-text-soft);
@@ -43,17 +46,20 @@
   font-weight: 600;
   cursor: pointer;
   transition: all var(--fm-transition);
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: 40px;
+  text-align: center;
 }
 .trend-tab:hover { background: var(--fm-hover); }
 .trend-tab.on { background: var(--fm-deep); color: white; border-color: var(--fm-deep); }
 
 .trend-entries-toggle {
-  margin-left: auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   padding: 0;
   border: 1px solid var(--fm-border-soft);
   background: transparent;
@@ -61,6 +67,7 @@
   border-radius: 6px;
   cursor: pointer;
   transition: all var(--fm-transition);
+  flex-shrink: 0;
 }
 .trend-entries-toggle:hover {
   background: var(--fm-hover);
@@ -72,11 +79,15 @@
   color: #3FAB8D;
   border-color: rgba(63, 171, 141, 0.45);
 }
-
-.trend-svg {
-  width: 100%;
-  height: clamp(90px, 12vw, 130px);
-  display: block;
+.trend-entries-toggle:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: var(--fm-bg-card);
+  color: var(--fm-text-muted);
+  border-color: var(--fm-border-soft);
+}
+.trend-entries-toggle:disabled:hover {
+  background: var(--fm-bg-card);
 }
 
 .trend-block { padding: clamp(8px, 1vw, 12px) clamp(12px, 1.4vw, 16px); }
@@ -95,9 +106,164 @@
   font-style: italic;
 }
 
+/* ── Layout: sticky Y-axis (HTML) + scrollable area для daily-режима ── */
 .trend-svg-wrap {
   position: relative;
   width: 100%;
+  display: flex;
+  align-items: stretch;
+  height: clamp(90px, 12vw, 130px);
+}
+
+.trend-yaxis {
+  flex: 0 0 24px;
+  position: relative;
+  pointer-events: none;
+  height: 100%;
+}
+.trend-yaxis-label {
+  position: absolute;
+  right: 6px;
+  font-family: var(--fm-font);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--fm-text-faint);
+  transform: translateY(-50%);
+  line-height: 1;
+}
+
+.trend-scroll {
+  position: relative;
+  flex: 1;
+  overflow: visible;  /* чтобы тултипы на краях графика не резались */
+  height: 100%;
+  min-width: 0;
+}
+
+.trend-svg { display: block; }
+.trend-svg-stretch { width: 100%; height: 100%; }
+
+/* ── HTML-маркеры записей (daily-режим) ─────────────────
+   Лежат поверх SVG но размер ФИКСИРОВАННЫЙ в пикселях —
+   не плющатся при сужении контейнера. */
+.trend-markers-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.trend-marker {
+  position: absolute;
+  bottom: 14px;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: transform 120ms ease-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  /* transform задаётся inline (translateX зависит от позиции точки + scale при hover) */
+}
+.trend-marker.on { z-index: 2; }
+.tm-emoji {
+  font-size: 14px;
+  line-height: 1;
+  user-select: none;
+}
+.tm-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1.5px solid #fff;
+  box-shadow: 0 0 0 0.5px rgba(0,0,0,0.05);
+}
+.tm-dot-default {
+  background: #3FAB8D;
+}
+.tm-tag {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 1.5px solid #3FAB8D;
+  background: rgba(63,171,141,0.18);
+  color: #3FAB8D;
+  font-size: 8.5px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Точка данных на линии: HTML-«пин» с фиксированным размером.
+   В SVG circle с preserveAspectRatio="none" превращается в эллипс — здесь нет.
+   Размер задаётся через CSS-vars родителем (tdp-density-*) — адаптивно к плотности. */
+.trend-markers-overlay {
+  --dp-size: 7px;
+  --dp-size-hover: 11px;
+  --dp-border: 1.5px;
+}
+.tdp-density-medium {
+  --dp-size: 5px;
+  --dp-size-hover: 9px;
+  --dp-border: 1px;
+}
+.tdp-density-dense {
+  --dp-size: 3px;
+  --dp-size-hover: 7px;
+  --dp-border: 1px;
+}
+.trend-data-point {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.trend-data-point::before {
+  content: '';
+  width: var(--dp-size);
+  height: var(--dp-size);
+  border-radius: 50%;
+  background: #9B7BD9;
+  border: var(--dp-border) solid #fff;
+  transition: width 120ms, height 120ms;
+}
+.trend-data-point.on::before {
+  width: var(--dp-size-hover);
+  height: var(--dp-size-hover);
+}
+.trend-data-point.on { z-index: 2; }
+
+/* Низкая выборка (< 3 дней с оценками за неделю): полупрозрачно + пунктирная обводка.
+   Глаз сразу видит «этой точке доверять с поправкой». */
+.trend-data-point.low-sample::before {
+  background: rgba(155, 123, 217, 0.45);
+  border-style: dashed;
+  border-color: #9B7BD9;
+}
+.trend-data-point.low-sample {
+  opacity: 0.75;
+}
+
+/* Weekly-маркер: эмодзи топ-настроения недели + счёт записей.
+   HTML, фиксированный размер, не плющится. Пассивный визуальный индикатор —
+   браузить записи лучше через ленту ниже графика. */
+.trend-weekly-marker {
+  position: absolute;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fm-deep);
+  white-space: nowrap;
+  user-select: none;
+  pointer-events: none;
+  background: rgba(255, 255, 255, 0.75);
+  padding: 1px 5px;
+  border-radius: 5px;
+  line-height: 1.2;
 }
 
 .trend-tooltip {
@@ -139,9 +305,119 @@
   margin-top: 1px;
 }
 
+/* ── Богатый тултип weekly-режима ──────────────────────── */
+.trend-tooltip-rich {
+  white-space: normal;
+  text-align: left;
+  padding: 8px 11px 9px;
+  min-width: 180px;
+  max-width: 240px;
+}
+.trend-tooltip-rich::after { display: none; }
+
+.tt-header {
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  opacity: 0.78;
+  margin-bottom: 5px;
+}
+.tt-main {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-bottom: 2px;
+}
+.tt-big {
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.3px;
+  line-height: 1;
+}
+.tt-of {
+  font-size: 11px;
+  opacity: 0.6;
+  font-weight: 500;
+}
+.tt-sub {
+  font-size: 10.5px;
+  opacity: 0.82;
+  font-weight: 500;
+  line-height: 1.35;
+}
+.tt-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.2);
+  margin: 6px 0 5px;
+}
+.tt-low-sample {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #FFD27A;
+  margin-top: 3px;
+  letter-spacing: 0.2px;
+}
+
+/* Группы сфер — компактная строка с цветным dot, именем, средним и дельтой */
+.tt-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.35;
+  padding: 1.5px 0;
+}
+.tt-group-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.3);
+}
+.tt-group-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0.92;
+}
+.tt-group-val {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  flex-shrink: 0;
+  letter-spacing: 0.2px;
+}
+.tt-group-delta {
+  font-size: 10px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  letter-spacing: 0.1px;
+  min-width: 36px;
+  text-align: right;
+}
+
+/* Дельта общей средней — справа от «/ 10», крупнее */
+.tt-delta {
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  margin-left: 6px;
+  letter-spacing: 0.2px;
+}
+
+/* Цветовые семьи для дельт: up = зелёный-салат, down = коралловый, stable = серый */
+.tt-d-up    { color: #8BE0A5; }
+.tt-d-down  { color: #FF9A8C; }
+.tt-d-stable { opacity: 0.5; }
+
 .trend-entries-tooltip {
   position: absolute;
-  transform: translateX(-50%);
+  /* transform задаётся inline (translateX зависит от позиции маркера для flip anchor) */
   background: white;
   border: 1px solid var(--fm-border-soft);
   padding: 6px 10px 7px;

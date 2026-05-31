@@ -414,6 +414,22 @@ export function getLastRatingBefore(sphereId, date) {
   `).get(sphereId, date)
 }
 
+// Для каждой сферы — самая поздняя оценка строго ДО given date.
+// Возвращает [{ sphere_id, date, value }]. Используется как fallback для дельты
+// в дашборде когда вчера у сферы нет оценки, но есть более ранняя.
+export function getLastRatingsBefore(date) {
+  return getDb().prepare(`
+    SELECT r.sphere_id, r.date, r.value
+    FROM ratings r
+    JOIN (
+      SELECT sphere_id, MAX(date) AS max_date
+      FROM ratings
+      WHERE date < ?
+      GROUP BY sphere_id
+    ) m ON r.sphere_id = m.sphere_id AND r.date = m.max_date
+  `).all(date)
+}
+
 export function getEntriesForSphere(sphereId, limit = 5) {
   const rows = getDb().prepare(`
     SELECT e.* FROM entries e
@@ -930,6 +946,186 @@ export function getDaysWithRatingsCount(startISO, endISO) {
     SELECT COUNT(DISTINCT date) AS cnt FROM ratings
     WHERE date >= ? AND date <= ?
   `).get(startISO, endISO).cnt
+}
+
+// ── Helpers для weekly aggregation (Step 16.1) ────────────────────
+
+// Из ms-timestamp получаем ISO дату (YYYY-MM-DD) в локальной таймзоне.
+function _msToLocalISO(ms) {
+  const d = new Date(ms)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+// Из ISO даты возвращаем ISO даты понедельника той же ISO-недели.
+// Понедельник = начало недели. Для воскресенья — возвращаем понедельник 6 дней назад.
+function _weekStartMonday(iso) {
+  const [y, m, d] = iso.split('-').map(Number)
+  const dt = new Date(y, m - 1, d)
+  const dow = dt.getDay() // 0=вс, 1=пн, ..., 6=сб
+  const offset = (dow + 6) % 7 // дней назад до понедельника
+  dt.setDate(dt.getDate() - offset)
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`
+}
+
+// Сдвигает ISO дату на N дней (положительное = вперёд).
+function _shiftISO(iso, deltaDays) {
+  const [y, m, d] = iso.split('-').map(Number)
+  const dt = new Date(y, m - 1, d + deltaDays)
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`
+}
+
+// Средние по неделям + разбивка по группам сфер.
+// Возвращает [{ weekStart, weekEnd, avg, ratingsCnt, daysCnt, groupAverages }] хронологически.
+// groupAverages: [{ groupId, name, color, avg, cnt }] — отсортированы по sort_order группы.
+// Дельты к предыдущей неделе считаем в renderer (там удобнее, у нас уже массив).
+export function getWeeklyAverages(startISO, endISO) {
+  const d = getDb()
+  // Загружаем порядок групп
+  const groups = d.prepare(
+    'SELECT id, name, color, sort_order FROM sphere_groups ORDER BY sort_order, id'
+  ).all()
+  const groupOrder = new Map()
+  groups.forEach((g, idx) => groupOrder.set(g.id, idx))
+
+  const rows = d.prepare(`
+    SELECT r.date, r.value, s.group_id, g.name AS groupName, g.color AS groupColor
+    FROM ratings r
+    JOIN spheres s ON s.id = r.sphere_id
+    LEFT JOIN sphere_groups g ON g.id = s.group_id
+    WHERE s.archived = 0 AND r.date >= ? AND r.date <= ?
+    ORDER BY r.date ASC
+  `).all(startISO, endISO)
+
+  const byWeek = new Map()
+  for (const r of rows) {
+    const ws = _weekStartMonday(r.date)
+    if (!byWeek.has(ws)) {
+      byWeek.set(ws, { values: [], dates: new Set(), byGroup: new Map() })
+    }
+    const w = byWeek.get(ws)
+    w.values.push(r.value)
+    w.dates.add(r.date)
+    const gid = r.group_id ?? 0
+    if (!w.byGroup.has(gid)) {
+      w.byGroup.set(gid, {
+        groupId: gid,
+        name: r.groupName || 'Без группы',
+        color: r.groupColor || '#888888',
+        values: []
+      })
+    }
+    w.byGroup.get(gid).values.push(r.value)
+  }
+
+  const result = []
+  const sortedKeys = [...byWeek.keys()].sort()
+  for (const weekStart of sortedKeys) {
+    const w = byWeek.get(weekStart)
+    const sum = w.values.reduce((s, v) => s + v, 0)
+    const groupAverages = []
+    for (const [, g] of w.byGroup) {
+      groupAverages.push({
+        groupId: g.groupId,
+        name: g.name,
+        color: g.color,
+        avg: g.values.reduce((s, v) => s + v, 0) / g.values.length,
+        cnt: g.values.length
+      })
+    }
+    // По sort_order группы (Без группы — в конце)
+    groupAverages.sort((a, b) => {
+      const oa = groupOrder.has(a.groupId) ? groupOrder.get(a.groupId) : 999
+      const ob = groupOrder.has(b.groupId) ? groupOrder.get(b.groupId) : 999
+      return oa - ob
+    })
+    result.push({
+      weekStart,
+      weekEnd: _shiftISO(weekStart, 6),
+      avg: sum / w.values.length,
+      ratingsCnt: w.values.length,
+      daysCnt: w.dates.size,
+      groupAverages
+    })
+  }
+  return result
+}
+
+// Метаданные недели для богатого тултипа в weekly-режиме:
+//   topMood — самый частый эмодзи недели + его счёт,
+//   entriesCnt — всего записей за неделю,
+//   topTags — топ-2 тега за неделю.
+// Возвращает Object<weekStart, { entriesCnt, topMood, moodCnt, topTags: [{name, cnt}] }>
+export function getWeeklyEntryStats(startISO, endISO) {
+  const d = getDb()
+  const startMs = new Date(startISO + 'T00:00:00').getTime()
+  const endMs = new Date(endISO + 'T23:59:59.999').getTime()
+
+  const entries = d.prepare(`
+    SELECT id, created_at, mood_emoji, content_text, pinned FROM entries
+    WHERE deleted_at IS NULL AND created_at >= ? AND created_at <= ?
+    ORDER BY pinned DESC, created_at DESC
+  `).all(startMs, endMs)
+
+  const tags = d.prepare(`
+    SELECT et.entry_id, t.name
+    FROM entry_tags et
+    JOIN tags t      ON t.id = et.tag_id
+    JOIN entries e   ON e.id = et.entry_id
+    WHERE e.deleted_at IS NULL AND e.created_at >= ? AND e.created_at <= ?
+  `).all(startMs, endMs)
+
+  const tagsByEntry = new Map()
+  for (const t of tags) {
+    if (!tagsByEntry.has(t.entry_id)) tagsByEntry.set(t.entry_id, [])
+    tagsByEntry.get(t.entry_id).push(t.name)
+  }
+
+  const byWeek = new Map()
+  for (const e of entries) {
+    const ws = _weekStartMonday(_msToLocalISO(e.created_at))
+    if (!byWeek.has(ws)) byWeek.set(ws, { entriesCnt: 0, moodCounts: new Map(), tagCounts: new Map(), entries: [] })
+    const w = byWeek.get(ws)
+    w.entriesCnt += 1
+    // entries уже отсортированы ORDER BY pinned DESC, created_at DESC — копим в том же порядке
+    if (w.entries.length < 10) {
+      w.entries.push({
+        id: e.id,
+        ts: e.created_at,
+        mood: e.mood_emoji || null,
+        pinned: !!e.pinned,
+        text: (e.content_text || '').trim().slice(0, 140)
+      })
+    }
+    if (e.mood_emoji) w.moodCounts.set(e.mood_emoji, (w.moodCounts.get(e.mood_emoji) || 0) + 1)
+    for (const tagName of (tagsByEntry.get(e.id) || [])) {
+      w.tagCounts.set(tagName, (w.tagCounts.get(tagName) || 0) + 1)
+    }
+  }
+
+  const result = {}
+  for (const [weekStart, w] of byWeek) {
+    // Все настроения недели, отсортированные по убыванию
+    const moodsList = [...w.moodCounts.entries()]
+      .map(([emoji, cnt]) => ({ emoji, cnt }))
+      .sort((a, b) => b.cnt - a.cnt)
+    const topMood = moodsList[0]?.emoji || null
+    const moodCnt = moodsList[0]?.cnt || 0
+    const moodTotal = moodsList.reduce((s, m) => s + m.cnt, 0)
+    const topTags = [...w.tagCounts.entries()]
+      .map(([name, cnt]) => ({ name, cnt }))
+      .sort((a, b) => b.cnt - a.cnt)
+      .slice(0, 3)
+    result[weekStart] = {
+      entriesCnt: w.entriesCnt,
+      moodTotal,
+      topMood,
+      moodCnt,
+      moodsList,
+      topTags,
+      topEntries: w.entries  // до 5 записей: { id, ts, mood, pinned, text }
+    }
+  }
+  return result
 }
 
 // ISO-дата (YYYY-MM-DD) самой ранней не-удалённой записи. null если БД пустая.

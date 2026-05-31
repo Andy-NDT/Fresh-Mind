@@ -64,6 +64,7 @@ contextBridge.exposeInMainWorld('freshMind', {
   getLatestRatings: (uptoDate) => ipcRenderer.invoke('get-latest-ratings', uptoDate),
   getSphereHistory: (sphereId, daysBack) => ipcRenderer.invoke('get-sphere-history', sphereId, daysBack),
   getLastRatingBefore: (sphereId, date) => ipcRenderer.invoke('get-last-rating-before', sphereId, date),
+  getLastRatingsBefore: (date) => ipcRenderer.invoke('get-last-ratings-before', date),
   getEntriesForSphere: (sphereId, limit) => ipcRenderer.invoke('get-entries-for-sphere', sphereId, limit),
   getDailyAverages: (startDate, endDate) => ipcRenderer.invoke('get-daily-averages', startDate, endDate),
   getEntryDates: (startDate, endDate) => ipcRenderer.invoke('get-entry-dates', startDate, endDate),
@@ -93,6 +94,8 @@ contextBridge.exposeInMainWorld('freshMind', {
   getDbStats: () => ipcRenderer.invoke('get-db-stats'),
   countEntriesInRange: (range) => ipcRenderer.invoke('count-entries-in-range', range),
   getFirstEntryDate: () => ipcRenderer.invoke('get-first-entry-date'),
+  getWeeklyAverages: (startISO, endISO) => ipcRenderer.invoke('get-weekly-averages', startISO, endISO),
+  getWeeklyEntryStats: (startISO, endISO) => ipcRenderer.invoke('get-weekly-entry-stats', startISO, endISO),
 
   // AI export
   exportAiReport: (range) => ipcRenderer.invoke('export-ai-report', range)
