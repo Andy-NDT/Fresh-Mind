@@ -1,4 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import ShareDialog from '../shared/ShareDialog.jsx'
 import logo from '../shared/brain.png'
 import QuickCapture from './QuickCapture'
 import RadarChart from './RadarChart'
@@ -131,6 +132,8 @@ export default function App() {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
   })
   const [compareDate, setCompareDate] = useState(null)
+  const [compareShareOpen, setCompareShareOpen] = useState(false)
+  const compareRef = useRef(null)
   const [isMaximized, setIsMaximized] = useState(false)
 
   function shiftStr(iso, deltaDays) {
@@ -323,9 +326,19 @@ export default function App() {
         {compareDate && (
           <div className="section-divider">
             <span className="section-label">Сравнение колёс</span>
+            <button
+              className="section-share-btn"
+              onClick={() => setCompareShareOpen(true)}
+              title="Скачать сравнение как картинку"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+            </button>
           </div>
         )}
 
+        <div ref={compareRef} className="radar-compare-wrap">
         <div className={`radar-stage ${compareDate ? 'is-compare' : ''}`}>
           <RadarChart
             date={date}
@@ -355,6 +368,19 @@ export default function App() {
 
         {compareDate && (
           <CompareDeltas dateA={date} dateB={compareDate} refreshKey={savedCount} />
+        )}
+        </div>
+
+        {compareDate && (
+          <ShareDialog
+            isOpen={compareShareOpen}
+            onClose={() => setCompareShareOpen(false)}
+            targetRef={compareRef}
+            filenameStem={`fresh-mind-compare-${date}-vs-${compareDate}`}
+            title="Скачать сравнение двух дат"
+            defaultSize="landscape"
+            defaultBackground="white"
+          />
         )}
 
         {detailSphereId != null && (

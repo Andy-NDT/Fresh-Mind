@@ -250,6 +250,28 @@ html, body {
   white-space: nowrap;
 }
 
+/* Кнопка-«скачать как картинку» в шапке секции */
+.section-share-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--fm-border-soft);
+  background: var(--fm-bg-soft);
+  color: var(--fm-deep);
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--fm-transition);
+  flex-shrink: 0;
+}
+.section-share-btn:hover {
+  background: var(--fm-hover);
+  border-color: var(--fm-border-hover);
+}
+
 .section-label-accent {
   color: var(--fm-deep);
   font-size: 12px;

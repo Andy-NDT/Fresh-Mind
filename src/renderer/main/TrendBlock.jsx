@@ -1,5 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react'
 import './TrendBlock.css'
+import ShareDialog from '../shared/ShareDialog.jsx'
+
+const PERIOD_LABEL = { 7: '7dn', 30: '30dn', 90: '90dn', 180: '6mes', 365: '1god' }
 
 function shiftDateStr(iso, deltaDays) {
   const [y, m, d] = iso.split('-').map(Number)
@@ -96,6 +99,10 @@ export default function TrendBlock({ date = todayISO(), refreshKey = 0 }) {
   // eslint-disable-next-line no-unused-vars
   const scrollRef = useRef(null)
 
+  // Шеринг динамики в PNG (17.4)
+  const blockRef = useRef(null)
+  const [shareOpen, setShareOpen] = useState(false)
+
   const linePoints = points.map((p, i) => ({ x: xFor(i), y: yFor(p.avg) }))
   const linePath = linePoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')
   const areaPath = linePoints.length >= 2
@@ -105,7 +112,7 @@ export default function TrendBlock({ date = todayISO(), refreshKey = 0 }) {
   const hover = hoverIdx != null && linePoints[hoverIdx] ? { ...linePoints[hoverIdx], data: points[hoverIdx] } : null
 
   return (
-    <div className="trend-block">
+    <div className="trend-block" ref={blockRef}>
       <div className="trend-header">
         <div className="trend-tabs">
           {[
@@ -122,21 +129,32 @@ export default function TrendBlock({ date = todayISO(), refreshKey = 0 }) {
             >{t.label}</button>
           ))}
         </div>
-        <button
-          className={`trend-entries-toggle ${showEntries ? 'on' : ''}`}
-          onClick={() => setShowEntries(v => !v)}
-          title={
-            MODE === 'weekly'
-              ? (showEntries ? 'Скрыть счётчики записей по неделям' : 'Показать счётчики записей по неделям')
-              : (showEntries ? 'Скрыть метки записей на графике' : 'Показать дни с записями на графике')
-          }
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-            <path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8l-5-5z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
-            <path d="M14 3v5h5" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
-            <path d="M9 13l2 2 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </button>
+        <div className="trend-header-actions">
+          <button
+            className="trend-share-btn"
+            onClick={() => setShareOpen(true)}
+            title="Скачать график как картинку"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+            </svg>
+          </button>
+          <button
+            className={`trend-entries-toggle ${showEntries ? 'on' : ''}`}
+            onClick={() => setShowEntries(v => !v)}
+            title={
+              MODE === 'weekly'
+                ? (showEntries ? 'Скрыть счётчики записей по неделям' : 'Показать счётчики записей по неделям')
+                : (showEntries ? 'Скрыть метки записей на графике' : 'Показать дни с записями на графике')
+            }
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8l-5-5z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
+              <path d="M14 3v5h5" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
+              <path d="M9 13l2 2 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        </div>
       </div>
       <div className={`trend-svg-wrap trend-svg-wrap-${MODE}`}>
         {/* Sticky Y-ось (HTML, не скроллится). Метки выровнены по yFor(v) в % от высоты. */}
@@ -439,6 +457,16 @@ export default function TrendBlock({ date = todayISO(), refreshKey = 0 }) {
         })()}
         </div>{/* /.trend-scroll */}
       </div>{/* /.trend-svg-wrap */}
+
+      <ShareDialog
+        isOpen={shareOpen}
+        onClose={() => setShareOpen(false)}
+        targetRef={blockRef}
+        filenameStem={`fresh-mind-dynamics-${PERIOD_LABEL[trendDays] || trendDays + 'd'}-${todayISO()}`}
+        title="Скачать график динамики"
+        defaultSize="og"
+        defaultBackground="white"
+      />
     </div>
   )
 }

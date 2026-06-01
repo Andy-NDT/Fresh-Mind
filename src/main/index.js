@@ -799,6 +799,26 @@ ipcMain.handle('export-ai-report', async (e, { startISO, endISO, promptText } = 
   }
 })
 
+// ── Sharing: сохранение PNG-картинок через системный save-dialog (Step 17.1) ──
+ipcMain.handle('save-png-file', async (e, { buffer, suggestedName } = {}) => {
+  if (!buffer) return { error: 'Нет данных для сохранения' }
+  const win = BrowserWindow.fromWebContents(e.sender)
+  const defName = suggestedName || `fresh-mind-${Date.now()}.png`
+  const r = await dialog.showSaveDialog(win, {
+    title: 'Сохранить картинку',
+    defaultPath: defName,
+    filters: [{ name: 'PNG', extensions: ['png'] }]
+  })
+  if (r.canceled || !r.filePath) return { canceled: true }
+  try {
+    // buffer приходит как Uint8Array (preload конвертирует ArrayBuffer)
+    fs.writeFileSync(r.filePath, Buffer.from(buffer))
+    return { ok: true, path: r.filePath }
+  } catch (err) {
+    return { error: err.message || String(err) }
+  }
+})
+
 ipcMain.on('quit-app', () => {
   app.isQuitting = true
   app.quit()

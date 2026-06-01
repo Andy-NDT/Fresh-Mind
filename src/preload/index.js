@@ -98,5 +98,14 @@ contextBridge.exposeInMainWorld('freshMind', {
   getWeeklyEntryStats: (startISO, endISO) => ipcRenderer.invoke('get-weekly-entry-stats', startISO, endISO),
 
   // AI export
-  exportAiReport: (range) => ipcRenderer.invoke('export-ai-report', range)
+  exportAiReport: (range) => ipcRenderer.invoke('export-ai-report', range),
+
+  // Sharing — сохранение PNG в системную файловую систему через save-dialog
+  savePngFile: (bufferOrUint8, suggestedName) => {
+    // Принимаем ArrayBuffer/Uint8Array/Buffer — нормализуем в Uint8Array
+    const buffer = bufferOrUint8 instanceof Uint8Array
+      ? bufferOrUint8
+      : new Uint8Array(bufferOrUint8)
+    return ipcRenderer.invoke('save-png-file', { buffer, suggestedName })
+  }
 })

@@ -226,7 +226,8 @@
 
 .radar-datetoday,
 .radar-datecompare,
-.radar-datepreset {
+.radar-datepreset,
+.radar-dateshare {
   border: 1px solid var(--fm-border-soft);
   background: var(--fm-bg-soft);
   color: var(--fm-deep);
@@ -242,7 +243,17 @@
 }
 .radar-datetoday:hover,
 .radar-datecompare:hover,
-.radar-datepreset:hover { background: var(--fm-hover); }
+.radar-datepreset:hover,
+.radar-dateshare:hover { background: var(--fm-hover); }
+
+.radar-dateshare {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 7px;
+  width: 28px;
+  height: 24px;
+}
 
 .radar-datepresets {
   display: inline-flex;

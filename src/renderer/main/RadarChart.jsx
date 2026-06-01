@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
+import ShareDialog from '../shared/ShareDialog.jsx'
 import sfxUrl from '../shared/tap.wav'
 import './RadarChart.css'
 
@@ -75,6 +76,7 @@ export default function RadarChart({ date: dateProp, onDateChange, onSphereDetai
   const [undoStack, setUndoStack] = useState([])
   const [flashSphereId, setFlashSphereId] = useState(null)
   const [soundEnabled, setSoundEnabled] = useState(true)
+  const [shareOpen, setShareOpen] = useState(false)
   const svgRef = useRef(null)
   const sfxRef = useRef(null)
   const isToday = date === today
@@ -504,6 +506,17 @@ export default function RadarChart({ date: dateProp, onDateChange, onSphereDetai
               {isComparing ? '× сравнение' : '⇆ сравнить'}
             </button>
           )}
+          {!comparePresets && !isComparing && (
+            <button
+              className="radar-dateshare"
+              onClick={() => setShareOpen(true)}
+              title="Скачать колесо как картинку"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+            </button>
+          )}
           {comparePresets && onComparePreset && (
             <span className="radar-datepresets">
               <button className="radar-datepreset" onClick={() => onComparePreset(1)} title="A − 1 день">вчера</button>
@@ -514,6 +527,15 @@ export default function RadarChart({ date: dateProp, onDateChange, onSphereDetai
           )}
         </div>
       </div>
+      <ShareDialog
+        isOpen={shareOpen}
+        onClose={() => setShareOpen(false)}
+        targetRef={svgRef}
+        filenameStem={`fresh-mind-radar-${date}`}
+        title="Скачать колесо за день"
+        defaultSize="square"
+        defaultBackground="white"
+      />
     </div>
   )
 }

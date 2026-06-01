@@ -36,7 +36,7 @@
 
 
 .trend-tab {
-  padding: 3px 0;
+  padding: 3px 4px;
   border: 1px solid var(--fm-border-soft);
   background: transparent;
   color: var(--fm-text-soft);
@@ -47,13 +47,21 @@
   cursor: pointer;
   transition: all var(--fm-transition);
   white-space: nowrap;
-  flex-shrink: 0;
-  min-width: 40px;
+  flex: 0 1 auto;
+  min-width: 30px;
   text-align: center;
 }
 .trend-tab:hover { background: var(--fm-hover); }
 .trend-tab.on { background: var(--fm-deep); color: white; border-color: var(--fm-deep); }
 
+.trend-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.trend-share-btn,
 .trend-entries-toggle {
   display: inline-flex;
   align-items: center;
@@ -68,6 +76,11 @@
   cursor: pointer;
   transition: all var(--fm-transition);
   flex-shrink: 0;
+}
+.trend-share-btn:hover {
+  background: var(--fm-hover);
+  color: var(--fm-deep);
+  border-color: var(--fm-border-hover);
 }
 .trend-entries-toggle:hover {
   background: var(--fm-hover);
