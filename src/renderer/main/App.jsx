@@ -37,7 +37,9 @@ export default function App() {
   const [dashboardExpanded, setDashboardExpanded] = useState(false)
   const [qcAutoOpen, setQcAutoOpen] = useState(false)
   const [showOnboarding, setShowOnboarding] = useState(false)
-  const [ratingTick, setRatingTick] = useState(0)
+  // Единый сигнал «оценка сферы изменилась» (колесо: клик/очистка; редактор: быстрый ввод).
+  // Бамп заставляет колесо И числовые блоки под ним (сводка, дельты, тренды) перечитаться сразу.
+  const [ratingBump, setRatingBump] = useState(0)
 
   // Решение показывать ли онбординг — на основании настроек и пустой ли БД.
   // В dev-режиме — уважаем только флаг (чтобы можно было протестировать с непустой БД).
@@ -61,7 +63,7 @@ export default function App() {
       }
       setShowOnboarding(!hasAny && s?.onboardingDone !== true)
     })
-  }, [savedCount, ratingTick])
+  }, [savedCount, ratingBump])
 
   async function finishOnboarding() {
     setShowOnboarding(false)
@@ -177,7 +179,7 @@ export default function App() {
       setCardSpheres((ss || []).filter(s => !s.archived))
       setCardRatings(rs || [])
     })
-  }, [savedCount, dashboardExpanded])
+  }, [savedCount, ratingBump, dashboardExpanded])
 
   const cardStats = useMemo(() => {
     if (!cardGroups.length) return []
@@ -279,6 +281,7 @@ export default function App() {
                 <div className="card-prompt">{cardPrompt}</div>
                 <QuickCapture
                   onSaved={() => setSavedCount(c => c + 1)}
+                  onRatingPersisted={() => setRatingBump(b => b + 1)}
                   onExpandRequest={() => { setDashboardExpanded(true); setQcAutoOpen(true) }}
                 />
                 <div className="card-sub">Сегодня отмечено {totalRated} / {totalSpheres} сфер</div>
@@ -301,6 +304,7 @@ export default function App() {
           <>
         <QuickCapture
           onSaved={() => setSavedCount(c => c + 1)}
+          onRatingPersisted={() => setRatingBump(b => b + 1)}
           autoOpen={qcAutoOpen}
           onAutoOpened={() => setQcAutoOpen(false)}
         />
@@ -347,8 +351,8 @@ export default function App() {
             isComparing={!!compareDate}
             onCompareToggle={toggleCompare}
             compact={!!compareDate}
-            refreshSignal={savedCount}
-            onRatingChanged={() => setRatingTick(t => t + 1)}
+            refreshSignal={savedCount + ratingBump}
+            onRatingChanged={() => setRatingBump(b => b + 1)}
           />
           {compareDate && (
             <RadarChart
@@ -362,12 +366,13 @@ export default function App() {
               refreshSignal={savedCount}
               comparePresets={true}
               onComparePreset={setComparePreset}
+              onRatingChanged={() => setRatingBump(b => b + 1)}
             />
           )}
         </div>
 
         {compareDate && (
-          <CompareDeltas dateA={date} dateB={compareDate} refreshKey={savedCount} />
+          <CompareDeltas dateA={date} dateB={compareDate} refreshKey={savedCount + ratingBump} />
         )}
         </div>
 
@@ -386,7 +391,7 @@ export default function App() {
         {detailSphereId != null && (
           <SphereDetailPanel
             sphereId={detailSphereId}
-            refreshKey={savedCount}
+            refreshKey={savedCount + ratingBump}
             onClose={() => setDetailSphereId(null)}
           />
         )}
@@ -394,14 +399,14 @@ export default function App() {
         <DashboardSummary
           date={date}
           compareDate={compareDate}
-          refreshKey={savedCount}
+          refreshKey={savedCount + ratingBump}
         />
 
         <div className="section-divider">
           <span className="section-label">Динамика</span>
         </div>
 
-        <TrendBlock date={date} refreshKey={savedCount} />
+        <TrendBlock date={date} refreshKey={savedCount + ratingBump} />
 
         <SummaryPanel refreshKey={savedCount} />
 

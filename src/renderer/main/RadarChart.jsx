@@ -140,11 +140,13 @@ export default function RadarChart({ date: dateProp, onDateChange, onSphereDetai
 
   useEffect(() => { reload() }, [date, refreshSignal])
 
-  // Close radial input on click outside SVG
+  // Close radial input on click outside SVG.
+  // Кнопку «убрать оценку» исключаем: она вне SVG, и без исключения mousedown
+  // закрыл бы шкалу до того, как сработает её onClick.
   useEffect(() => {
     if (activeSphereId == null) return
     function handleOutside(e) {
-      if (svgRef.current && !svgRef.current.contains(e.target)) {
+      if (svgRef.current && !svgRef.current.contains(e.target) && !e.target.closest('.radar-clearbtn')) {
         setActiveSphereId(null)
       }
     }
@@ -444,6 +446,15 @@ export default function RadarChart({ date: dateProp, onDateChange, onSphereDetai
               ? 'нажми на любую сферу, чтобы поставить первую оценку'
               : 'ЛКМ — оценка · ПКМ — детали'}
         </div>
+      )}
+
+      {/* Очистка оценки активной сферы. Появляется, когда у открытой сферы есть оценка. */}
+      {activeSphereId != null && ratings[activeSphereId] != null && (
+        <button
+          className="radar-clearbtn"
+          onClick={() => clearSphereRating(activeSphereId)}
+          title="Убрать оценку этой сферы"
+        >× убрать оценку</button>
       )}
       <div className="radar-meta">
         <div className="radar-datebar">

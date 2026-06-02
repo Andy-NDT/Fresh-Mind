@@ -784,9 +784,12 @@ export function saveEntry(entry) {
     }
 
     // sphere_ratings: [{sphere_id, value}] — пишем в entry_spheres + ratings (UPSERT)
-    // Дата rating'а = дата создания записи (YYYY-MM-DD из created_at)
+    // Дата rating'а = ЛОКАЛЬНАЯ дата создания записи (YYYY-MM-DD). Не UTC: иначе
+    // у пользователя с положительным сдвигом (UTC+3) запись ночью попала бы на
+    // вчерашний день и разошлась бы с live-оценкой из быстрого ввода и с колесом.
     const createdRow = d.prepare('SELECT created_at FROM entries WHERE id = ?').get(id)
-    const entryDate = new Date(createdRow.created_at).toISOString().slice(0, 10)
+    const cd = new Date(createdRow.created_at)
+    const entryDate = `${cd.getFullYear()}-${String(cd.getMonth() + 1).padStart(2, '0')}-${String(cd.getDate()).padStart(2, '0')}`
     const upsertRating = d.prepare(`
       INSERT INTO ratings (sphere_id, date, value, note, entry_id, created_at, updated_at)
       VALUES (?, ?, ?, NULL, ?, ?, ?)

@@ -265,8 +265,9 @@ export default function TrendBlock({ date = todayISO(), refreshKey = 0 }) {
           for (const [, entries] of entryMap) {
             for (const e of (entries || [])) {
               const dt = new Date(e.ts)
-              const utcISO = dt.toISOString().slice(0, 10)
-              const idx = dateIndexMap.get(utcISO)
+              // Локальная дата (не UTC) — точки тренда и getEntriesByDay тоже локальные.
+              const localISO = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`
+              const idx = dateIndexMap.get(localISO)
               if (idx === undefined) continue
               // SVG-координата x в той же системе что и линия
               const baseX = PAD_L + (points.length <= 1 ? innerW / 2 : (idx / (points.length - 1)) * innerW)
@@ -408,10 +409,10 @@ export default function TrendBlock({ date = todayISO(), refreshKey = 0 }) {
           // То же индекс-based позиционирование как у самих маркеров — иначе тултип
           // прилетит в другое место графика.
           const dt = new Date(target.ts)
-          const utcISO = dt.toISOString().slice(0, 10)
+          const localISO = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`
           const dateIndexMap2 = new Map()
           points.forEach((p, i) => dateIndexMap2.set(p.date, i))
-          const idx = dateIndexMap2.get(utcISO)
+          const idx = dateIndexMap2.get(localISO)
           if (idx === undefined) return null
           const baseX = PAD_L + (points.length <= 1 ? innerW / 2 : (idx / (points.length - 1)) * innerW)
           const slotW2 = points.length >= 2 ? innerW / (points.length - 1) : innerW

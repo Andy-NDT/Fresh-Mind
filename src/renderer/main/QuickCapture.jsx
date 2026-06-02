@@ -48,7 +48,14 @@ function extractHashtags(text) {
   return [...out]
 }
 
-export default function QuickCapture({ onSaved, onExpandRequest, autoOpen = false, onAutoOpened }) {
+// Локальная (не UTC) дата «сегодня» — должна совпадать с тем, как считает дату
+// колесо (RadarChart) и saveEntry в db.js, иначе оценка ляжет не на тот день.
+function todayISOLocal() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+export default function QuickCapture({ onSaved, onRatingPersisted, onExpandRequest, autoOpen = false, onAutoOpened }) {
   const [expanded, setExpanded] = useState(false)
   const [placeholder, setPlaceholder] = useState(() => randomPlaceholder())
   const [spheres, setSpheres] = useState([])
@@ -164,11 +171,14 @@ export default function QuickCapture({ onSaved, onExpandRequest, autoOpen = fals
     return () => document.removeEventListener('mousedown', handleOutside)
   }, [showEmojiPicker, showColorPicker])
 
-  // Close value-row on click outside
+  // Close value-row on click outside.
+  // ВАЖНО: шкала (ValueSelectorRow) живёт в .qc-sphere-group-vsr — это СОСЕД
+  // .qc-sphere-chip-wrap, а не его потомок. Если не исключить vsr из «клика снаружи»,
+  // mousedown по цифре закроет шкалу до того, как сработает её onClick → onChange.
   useEffect(() => {
     if (openSphereId == null) return
     function handleOutside(e) {
-      if (!e.target.closest('.qc-sphere-chip-wrap')) {
+      if (!e.target.closest('.qc-sphere-chip-wrap') && !e.target.closest('.qc-sphere-group-vsr')) {
         setOpenSphereId(null)
       }
     }
@@ -252,13 +262,33 @@ export default function QuickCapture({ onSaved, onExpandRequest, autoOpen = fals
     })
   }
 
-  function clearSphereValue(id) {
+  // Выбор цифры в шкале: сразу выставляем сегодняшнюю оценку на колесо (persist),
+  // как и прямой клик по сфере на радаре. Черновик-чип тоже обновляем, шкалу закрываем.
+  async function pickSphereValue(id, value) {
+    setSphereValue(id, value)
+    setOpenSphereId(null)
+    try {
+      await window.freshMind.saveRating(id, todayISOLocal(), value, null, null)
+      if (onRatingPersisted) onRatingPersisted()
+    } catch (e) {
+      console.error('saveRating failed', e)
+    }
+  }
+
+  // Снять оценку (×): убираем и из черновика, и с колеса (за сегодня).
+  async function clearSphereValue(id) {
     setSphereValues(prev => {
       const next = new Map(prev)
       next.delete(id)
       return next
     })
     setOpenSphereId(null)
+    try {
+      await window.freshMind.deleteRating(id, todayISOLocal())
+      if (onRatingPersisted) onRatingPersisted()
+    } catch (e) {
+      console.error('deleteRating failed', e)
+    }
   }
 
   function insertEmojiInText(emoji) {
@@ -615,7 +645,7 @@ export default function QuickCapture({ onSaved, onExpandRequest, autoOpen = fals
                       <ValueSelectorRow
                         value={sphereValues.get(openInGroup.id)}
                         color={openInGroup.color}
-                        onChange={(v) => { setSphereValue(openInGroup.id, v); setOpenSphereId(null) }}
+                        onChange={(v) => pickSphereValue(openInGroup.id, v)}
                         onClear={sphereValues.has(openInGroup.id) ? () => clearSphereValue(openInGroup.id) : null}
                         size="sm"
                       />

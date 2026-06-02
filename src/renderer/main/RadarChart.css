@@ -283,6 +283,27 @@
   margin-bottom: 10px;  /* отделить от блока с датой */
 }
 
+/* Кнопка «убрать оценку» активной сферы */
+.radar-clearbtn {
+  margin: -4px 0 8px;
+  padding: 4px 12px;
+  border: 1px solid var(--fm-border-soft);
+  background: var(--fm-bg-soft);
+  color: var(--fm-text-soft);
+  font-family: var(--fm-font);
+  font-size: 11.5px;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all var(--fm-transition);
+}
+.radar-clearbtn:hover {
+  background: #fdecec;
+  border-color: #f3b8b8;
+  color: #c0392b;
+}
+
 .radar-empty {
   width: 100%;
   max-width: 640px;
