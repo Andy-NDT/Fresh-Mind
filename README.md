@@ -1,4 +1,5 @@
 # Fresh Mind
+<img width="470" height="390" alt="Fresh mind ОНБОРДИНГ" src="https://github.com/user-attachments/assets/64c44a80-8381-4545-8343-ab4f385a96a8" />
 
 Дневник для тех, кто хочет видеть себя со стороны.
 
