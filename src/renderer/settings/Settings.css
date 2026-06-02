@@ -277,6 +277,94 @@ button.settings-row-trash:hover .row-icon-trash {
   transform: translateX(18px);
 }
 
+/* ── Выбор времени уведомления (TimeScroller) ── */
+.row-dimmed {
+  opacity: 0.45;
+  transition: opacity var(--fm-transition);
+}
+
+.time-scroller {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  -webkit-app-region: no-drag;
+  user-select: none;
+  width: 48px;
+  justify-content: center;
+}
+
+.time-part-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 22px;
+}
+
+.time-arrow {
+  position: absolute;
+  font-size: 5px;
+  line-height: 1;
+  color: transparent;
+  cursor: pointer;
+  transition: color var(--fm-transition);
+}
+
+.time-arrow:first-child { top: -2px; }
+.time-arrow:last-child { bottom: -2px; }
+
+.time-arrow.visible {
+  color: var(--fm-text-faint);
+}
+
+.time-part-wrap:hover .time-arrow.visible {
+  color: var(--fm-main);
+}
+
+.time-part {
+  width: 18px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fm-text-mid);
+  background: var(--fm-tint-soft);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.time-part-wrap:hover .time-part {
+  background: var(--fm-hover);
+  color: var(--fm-deep);
+}
+
+.time-part-input {
+  width: 20px;
+  height: 22px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fm-deep);
+  text-align: center;
+  border: 1px solid var(--fm-main);
+  border-radius: 4px;
+  background: var(--fm-hover-soft);
+  outline: none;
+  padding: 0;
+  font-family: var(--fm-font);
+}
+
+.time-sep {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--fm-text-muted);
+  padding: 0 1px;
+  align-self: center;
+}
+
 .settings-note {
   font-size: 10.5px;
   color: var(--fm-text-muted);

@@ -1,5 +1,89 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import logo from '../shared/brain.png'
+
+function TimePart({ value, max, onChange }) {
+  const ref = useRef(null)
+  const inputRef = useRef(null)
+  const [editing, setEditing] = useState(false)
+  const [hovered, setHovered] = useState(false)
+
+  const handleWheel = useCallback((e) => {
+    e.preventDefault()
+    const dir = e.deltaY < 0 ? 1 : -1
+    onChange((value + dir + max + 1) % (max + 1))
+  }, [value, max, onChange])
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    el.addEventListener('wheel', handleWheel, { passive: false })
+    return () => el.removeEventListener('wheel', handleWheel)
+  }, [handleWheel])
+
+  function startEdit() {
+    setEditing(true)
+    setTimeout(() => { inputRef.current?.focus(); inputRef.current?.select() }, 0)
+  }
+
+  function commitEdit(v) {
+    const n = parseInt(v)
+    if (!isNaN(n) && n >= 0 && n <= max) onChange(n)
+    setEditing(false)
+  }
+
+  const display = String(value).padStart(2, '0')
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        className="time-part-input"
+        type="text"
+        defaultValue={display}
+        maxLength={2}
+        onBlur={e => commitEdit(e.target.value)}
+        onKeyDown={e => {
+          if (e.key === 'Enter') commitEdit(e.target.value)
+          if (e.key === 'Escape') setEditing(false)
+          if (e.key === 'ArrowUp') { e.preventDefault(); onChange((value + 1) % (max + 1)) }
+          if (e.key === 'ArrowDown') { e.preventDefault(); onChange((value - 1 + max + 1) % (max + 1)) }
+        }}
+      />
+    )
+  }
+
+  return (
+    <div
+      ref={ref}
+      className="time-part-wrap"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <span className={`time-arrow ${hovered ? 'visible' : ''}`}
+        onClick={() => onChange((value + 1) % (max + 1))}>▲</span>
+      <span className="time-part" onClick={startEdit}>{display}</span>
+      <span className={`time-arrow ${hovered ? 'visible' : ''}`}
+        onClick={() => onChange((value - 1 + max + 1) % (max + 1))}>▼</span>
+    </div>
+  )
+}
+
+function TimeScroller({ value, onChange }) {
+  const safe = /^\d{2}:\d{2}$/.test(value || '') ? value : '22:00'
+  const hh = parseInt(safe.slice(0, 2))
+  const mm = parseInt(safe.slice(3, 5))
+  return (
+    <div className="time-scroller">
+      <TimePart value={hh} max={23} onChange={h =>
+        onChange(String(h).padStart(2, '0') + ':' + safe.slice(3, 5))
+      } />
+      <span className="time-sep">:</span>
+      <TimePart value={mm} max={59} onChange={m =>
+        onChange(safe.slice(0, 2) + ':' + String(m).padStart(2, '0'))
+      } />
+    </div>
+  )
+}
 
 export default function Settings() {
   const [settings, setSettings] = useState(null)
@@ -94,6 +178,16 @@ export default function Settings() {
           >
             <span className="toggle-knob" />
           </button>
+        </div>
+      </div>
+
+      <div className={`settings-row ${popupOn ? '' : 'row-dimmed'}`}>
+        <span className="row-label">Время уведомления</span>
+        <div className="row-control">
+          <TimeScroller value={settings.notifyTime || '22:00'} onChange={async v => {
+            const updated = await window.freshMind.saveSettings({ notifyTime: v })
+            setSettings(updated)
+          }} />
         </div>
       </div>
 
