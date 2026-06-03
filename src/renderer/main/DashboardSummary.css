@@ -1,6 +1,6 @@
 .dashboard-summary {
   width: 100%;
-  max-width: 720px;
+  max-width: 480px;
   margin: 12px auto 22px;
   display: flex;
   flex-direction: column;
@@ -30,10 +30,16 @@
 }
 
 @container dssum (max-width: 600px) {
-  .ds-groups, .ds-metrics { grid-template-columns: repeat(2, 1fr) !important; }
+  .ds-groups { grid-template-columns: repeat(2, 1fr) !important; }
   .ds-group-avg { font-size: 16px; }
   .ds-metric-value { font-size: 13px; }
   .ds-group-tile, .ds-metric-tile { padding: 5px 8px; min-height: 42px; }
+}
+
+/* Метрики держим в 4 колонки даже при узком блоке (480px), на 2×2 ломаем только
+   совсем в узком окне (<440px) — иначе строка ОТМЕЧЕНО/СРЕДНЯЯ/ВЫШЕ/НИЖЕ скачет. */
+@container dssum (max-width: 440px) {
+  .ds-metrics { grid-template-columns: repeat(2, 1fr) !important; }
 }
 
 .ds-group-tile {

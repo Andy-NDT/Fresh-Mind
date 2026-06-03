@@ -1,6 +1,6 @@
 .trend-block {
   width: 100%;
-  max-width: 720px;
+  max-width: 480px;
   margin: 4px auto 6px;
   background: var(--fm-bg-card);
   border: 1px solid var(--fm-border-soft);

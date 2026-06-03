@@ -327,6 +327,7 @@ export default function App() {
 
         <OnThisDay refreshKey={savedCount} />
 
+        {/* Колесо — на всю ширину, по центру окна (одна колонка) */}
         {compareDate && (
           <div className="section-divider">
             <span className="section-label">Сравнение колёс</span>
@@ -396,12 +397,17 @@ export default function App() {
           />
         )}
 
+        {/* Под колесом — два столбца: слева карточки сводки, справа Динамика+Сводка */}
+        <div className={`dashboard-grid ${compareDate ? 'is-compare-mode' : ''}`}>
+        <div className="dash-col dash-col-left">
         <DashboardSummary
           date={date}
           compareDate={compareDate}
           refreshKey={savedCount + ratingBump}
         />
+        </div>{/* /.dash-col-left */}
 
+        <div className="dash-col dash-col-right">
         <div className="section-divider">
           <span className="section-label">Динамика</span>
         </div>
@@ -409,6 +415,8 @@ export default function App() {
         <TrendBlock date={date} refreshKey={savedCount + ratingBump} />
 
         <SummaryPanel refreshKey={savedCount} />
+        </div>{/* /.dash-col-right */}
+        </div>{/* /.dashboard-grid */}
 
         <div className="section-divider">
           <span className="section-label">Записи</span>

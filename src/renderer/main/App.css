@@ -222,6 +222,46 @@ html, body {
   margin: 12px auto 0;
 }
 
+/* ── Дашборд: сетка под колесом ──────────────────────────────────────────────
+   Колесо — отдельно, на всю ширину по центру окна. ПОД ним идёт .dashboard-grid:
+   • узкое окно → один столбец (карточки сводки, затем Динамика и Сводка — обычный
+     вертикальный поток, как было);
+   • широкое окно (≥1280px, по сути фуллскрин) → два столбца вровень: слева карточки
+     сводки, справа Динамика + Сводка. Ширину держим ~1500px, чтобы оба столбца
+     стояли прямо под центрированным колесом, а не разъезжались к краям экрана.
+   В режиме сравнения колёс (.is-compare-mode) всегда один столбец.
+   «Записи» лежат под сеткой и всегда во всю ширину. */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  max-width: 480px;          /* одноколоночный: ширина = контент-блокам, заметно уже колеса */
+  margin: 0 auto;
+  align-items: start;
+}
+
+.dash-col { min-width: 0; }
+
+/* Порог в CSS-пикселях. При масштабе экрана 125% окно «1317 физ.px» ≈ 1053 CSS-px,
+   поэтому порог 1000 держит две колонки на таких окнах, а уже него — одна. */
+@media (min-width: 1000px) {
+  .dashboard-grid:not(.is-compare-mode) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: clamp(20px, 2vw, 40px);
+    max-width: 1040px;       /* два столбца ≈ по 480px — узкие, чтобы колесо доминировало */
+    margin-top: 16px;
+  }
+  /* Заголовок «Динамика» в two-col убираем — он сдвигал график вниз относительно
+     карточек. Без него верх левого (карточки) и правого (график) боксов выставляем
+     ровно по одному уровню. */
+  .dashboard-grid:not(.is-compare-mode) .dash-col-right > .section-divider:first-child {
+    display: none;
+  }
+  .dashboard-grid:not(.is-compare-mode) .dash-col-left > .dashboard-summary,
+  .dashboard-grid:not(.is-compare-mode) .dash-col-right > .trend-block {
+    margin-top: 0;
+  }
+}
+
 /* Section divider — визуальная граница между блоками */
 .section-divider {
   max-width: 1100px;
