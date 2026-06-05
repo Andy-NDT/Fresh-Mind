@@ -29,16 +29,8 @@ function shiftDate(iso, deltaDays) {
   return `${nx.getFullYear()}-${String(nx.getMonth() + 1).padStart(2, '0')}-${String(nx.getDate()).padStart(2, '0')}`
 }
 
-// Угол для сферы i (0..total-1): центр 18°-сегмента,
-// первая сфера начинается слева (9 часов = -180°)
-function angleRad(i, total) {
-  return (-180 + (i + 0.5) * (360 / total)) * (Math.PI / 180)
-}
-
-
-// Точка на радаре по индексу и значению
-function point(i, total, value) {
-  const a = angleRad(i, total)
+// Точка на радаре по углу (радианы) и значению оценки
+function pointAtAngle(a, value) {
   const r = R * (value / SCALE_MAX)
   return [CX + r * Math.cos(a), CY + r * Math.sin(a)]
 }
@@ -175,49 +167,57 @@ export default function RadarChart({ date: dateProp, onDateChange, onSphereDetai
     if (onRatingChanged) onRatingChanged()
   }
 
-  // Сферы упорядочены по RADAR_GROUP_ORDER (Здоровье → Общество → Труд → Развитие).
-  // Внутри группы — по sort_order из БД (настраивается пользователем в Настройках).
-  // Берём по 5 сфер на группу.
-  const ordered = useMemo(() => {
+  // Раскладка сфер по квадрантам. Каждая ГРУППА занимает фиксированные 90°
+  // (вертикально-горизонтальный крест неизменен), а сферы ВНУТРИ группы делят
+  // эти 90° поровну — адаптивно к их числу. Поэтому удаление сферы меняет только
+  // деление внутри её собственной группы; остальные квадранты не «уезжают».
+  // Порядок квадрантов — RADAR_GROUP_ORDER (Здоровье → Общество → Труд → Развитие),
+  // внутри группы — по sort_order из БД. Максимум 5 сфер на группу.
+  const layout = useMemo(() => {
     if (!spheres.length || !groups.length) return []
     const groupByName = new Map(groups.map(g => [g.name?.trim(), g]))
-    const result = []
-    for (const groupName of RADAR_GROUP_ORDER) {
-      const g = groupByName.get(groupName)
+    const d2r = Math.PI / 180
+    const out = []
+    for (let k = 0; k < RADAR_GROUP_ORDER.length; k++) {
+      const g = groupByName.get(RADAR_GROUP_ORDER[k])
       if (!g) continue
       const inGroup = spheres
         .filter(s => s.group_id === g.id)
         .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
         .slice(0, 5)
-      result.push(...inGroup)
+      const count = inGroup.length
+      if (!count) continue
+      const baseDeg = -180 + k * 90   // левая граница квадранта группы
+      const stepDeg = 90 / count      // адаптивная ширина сектора одной сферы
+      inGroup.forEach((sphere, j) => {
+        out.push({
+          sphere,
+          group: g,
+          groupIndex: k,
+          indexInGroup: j,
+          groupCount: count,
+          aCenter: (baseDeg + (j + 0.5) * stepDeg) * d2r,
+          a1: (baseDeg + j * stepDeg) * d2r,
+          a2: (baseDeg + (j + 1) * stepDeg) * d2r
+        })
+      })
     }
-    return result
+    return out
   }, [spheres, groups])
 
+  const ordered = useMemo(() => layout.map(l => l.sphere), [layout])
   const total = ordered.length
   if (!total) {
     return <div className="radar-empty fm-pulse">Загружаем колесо</div>
   }
 
   // Точки паутинки (если оценки нет — берём 0, чтобы полигон замкнулся)
-  const webPoints = ordered
-    .map((s, i) => point(i, total, ratings[s.id] ?? 0).join(','))
+  const webPoints = layout
+    .map(l => pointAtAngle(l.aCenter, ratings[l.sphere.id] ?? 0).join(','))
     .join(' ')
 
-  // Сектора групп: по квадрантам, в порядке RADAR_GROUP_ORDER
-  const groupSectors = []
-  for (let k = 0; k < RADAR_GROUP_ORDER.length; k++) {
-    const name = RADAR_GROUP_ORDER[k]
-    const g = groups.find(x => x.name === name)
-    if (!g) continue
-    const count = ordered.filter(s => s.group_id === g.id).length
-    if (count === 0) continue
-    const a1 = (-180 + k * 90) * (Math.PI / 180)
-    const a2 = (-180 + (k + 1) * 90) * (Math.PI / 180)
-    groupSectors.push({ ...g, k, count, a1, a2 })
-  }
-
-  // Радиальные разделители на границах квадрантов: -180°, -90°, 0°, 90°
+  // Радиальные разделители на границах квадрантов: -180°, -90°, 0°, 90°.
+  // Крест всегда в одних и тех же местах — независимо от числа сфер в группах.
   const groupBoundaries = [-180, -90, 0, 90].map(deg => {
     const a = deg * (Math.PI / 180)
     return [CX + R * Math.cos(a), CY + R * Math.sin(a)]
@@ -228,9 +228,10 @@ export default function RadarChart({ date: dateProp, onDateChange, onSphereDetai
       <svg ref={svgRef} viewBox={`0 0 ${SIZE} ${SIZE}`} className="radar-svg" preserveAspectRatio="xMidYMid meet">
         {/* Цветные клинья — каждый под свою сферу. Активный — 10 полос для оценки */}
         <g className="radar-sphere-sectors">
-          {ordered.map((s, i) => {
-            const a1 = angleRad(i - 0.5, total)
-            const a2 = angleRad(i + 0.5, total)
+          {layout.map((l) => {
+            const s = l.sphere
+            const a1 = l.a1
+            const a2 = l.a2
             const isActive = activeSphereId === s.id
             const isDim = activeSphereId != null && !isActive
 
@@ -288,19 +289,19 @@ export default function RadarChart({ date: dateProp, onDateChange, onSphereDetai
           ))}
         </g>
 
-        {/* Лучи-разделители — едва видимы между сферами, не на границах групп */}
+        {/* Лучи-разделители — едва видимы между сферами ВНУТРИ группы.
+            Границы между группами рисует белый крест (radar-boundaries) — их пропускаем. */}
         <g className="radar-spokes">
-          {ordered.map((s, i) => {
-            // Линия идёт между сферой i и i+1 → угол angle(i + 0.5)
-            // Если эта линия совпадает с границей квадранта — пропускаем (она уже белая)
-            const fracInGroup = (i + 1) % (total / 4)
-            if (fracInGroup === 0) return null
-            const a = angleRad(i + 0.5, total)
-            const x = CX + R * Math.cos(a)
-            const y = CY + R * Math.sin(a)
+          {layout.map((l) => {
+            // Делитель на правой границе сектора сферы (l.a2). Если сфера последняя
+            // в своей группе — её правая граница совпадает с границей квадранта,
+            // которую уже рисует белый крест → пропускаем.
+            if (l.indexInGroup === l.groupCount - 1) return null
+            const x = CX + R * Math.cos(l.a2)
+            const y = CY + R * Math.sin(l.a2)
             return (
               <line
-                key={s.id}
+                key={l.sphere.id}
                 x1={CX} y1={CY} x2={x} y2={y}
                 stroke="rgba(155, 123, 217, 0.10)"
                 strokeWidth="1"
@@ -323,11 +324,12 @@ export default function RadarChart({ date: dateProp, onDateChange, onSphereDetai
         {/* Узлы — точки оценок на паутинке, с числом внутри. Скрываем для активной.
             cx/cy анимируются через CSS — плавный bounce при смене оценки/даты. */}
         <g className="radar-nodes" pointerEvents="none">
-          {ordered.map((s, i) => {
+          {layout.map((l) => {
+            const s = l.sphere
             if (s.id === activeSphereId) return null
             const value = ratings[s.id]
             if (value == null || value === 0) return null
-            const [x, y] = point(i, total, value)
+            const [x, y] = pointAtAngle(l.aCenter, value)
             const isFlash = flashSphereId === s.id
             return (
               <g key={s.id} className={`radar-node-g ${isFlash ? 'is-flash' : ''}`}>
@@ -351,11 +353,11 @@ export default function RadarChart({ date: dateProp, onDateChange, onSphereDetai
 
         {/* Полосы активной сферы — ПОВЕРХ паутинки и узлов */}
         {activeSphereId != null && (() => {
-          const idx = ordered.findIndex(s => s.id === activeSphereId)
-          if (idx < 0) return null
-          const s = ordered[idx]
-          const a1 = angleRad(idx - 0.5, total)
-          const a2 = angleRad(idx + 0.5, total)
+          const item = layout.find(l => l.sphere.id === activeSphereId)
+          if (!item) return null
+          const s = item.sphere
+          const a1 = item.a1
+          const a2 = item.a2
           const currentValue = ratings[s.id]
           const previewMax = hoverValue ?? currentValue ?? 0
           return (
@@ -397,8 +399,9 @@ export default function RadarChart({ date: dateProp, onDateChange, onSphereDetai
 
         {/* Внешние круги-метки сфер: имя ВНУТРИ круга */}
         <g className="radar-hubs">
-          {ordered.map((s, i) => {
-            const a = angleRad(i, total)
+          {layout.map((l) => {
+            const s = l.sphere
+            const a = l.aCenter
             const hubX = CX + R_HUB * Math.cos(a)
             const hubY = CY + R_HUB * Math.sin(a)
             const isActive = activeSphereId === s.id
