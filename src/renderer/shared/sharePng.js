@@ -41,6 +41,16 @@ export async function exportElementToPng(targetEl, opts) {
   const sz = SHARE_SIZES[size] || SHARE_SIZES.square
   const bg = SHARE_BACKGROUNDS[background] || SHARE_BACKGROUNDS.white
 
+  // Геометрия фрейма. Подпись живёт в отдельной зарезервированной полосе ПОД
+  // картинкой, а не «доклеивается» к ней снизу — поэтому при переполнении
+  // обрезается край картинки (она симметрична), но никогда сама подпись.
+  const PAD_X = 48
+  const PAD_Y = 36
+  const hasCaption = !!(userCaption && userCaption.trim())
+  const captionBand = hasCaption ? 78 : 0       // margin-top(22) + строка(~36) + воздух
+  const availW = sz.w - PAD_X * 2
+  const availH = sz.h - PAD_Y * 2 - captionBand // высота сцены — уже без полосы подписи
+
   // 1. Создаём оффскрин-обёртку нужного размера
   const frame = document.createElement('div')
   frame.style.cssText = `
@@ -54,29 +64,45 @@ export async function exportElementToPng(targetEl, opts) {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 36px 48px;
+    padding: ${PAD_Y}px ${PAD_X}px;
     box-sizing: border-box;
     font-family: var(--fm-font, system-ui, sans-serif);
     overflow: hidden;
     z-index: -1;
   `
 
-  // 2. Клонируем target внутрь
-  const clone = targetEl.cloneNode(true)
-  // Чтобы клон выглядел как оригинал, перенесём computed background
-  clone.style.maxWidth = '100%'
-  clone.style.maxHeight = (sz.h - 120) + 'px'
-  clone.style.boxSizing = 'border-box'
-  frame.appendChild(clone)
+  // 2. Сцена фиксированного размера под картинку. Клон вписывается внутрь по
+  //    max-width/height; preserveAspectRatio="meet" у SVG-колеса показывает его
+  //    целиком, а overflow:hidden клипает только излишек картинки (не подпись).
+  const stage = document.createElement('div')
+  stage.style.cssText = `
+    flex: 0 0 auto;
+    width: ${availW}px;
+    height: ${availH}px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  `
 
-  // 3. Подпись юзера (опц.)
-  if (userCaption && userCaption.trim()) {
+  // 3. Клонируем target внутрь сцены
+  const clone = targetEl.cloneNode(true)
+  clone.style.maxWidth = '100%'
+  clone.style.maxHeight = '100%'
+  clone.style.boxSizing = 'border-box'
+  stage.appendChild(clone)
+  frame.appendChild(stage)
+
+  // 4. Подпись юзера (опц.) — в зарезервированной полосе под сценой
+  if (hasCaption) {
     const cap = document.createElement('div')
     cap.textContent = userCaption.trim().slice(0, 40)
     cap.style.cssText = `
+      flex: 0 0 auto;
       margin-top: 22px;
-      max-width: 80%;
+      max-width: 86%;
       font-size: 28px;
+      line-height: 1.25;
       font-weight: 600;
       color: ${bg.value === '#1c1430' ? 'rgba(255,255,255,0.92)' : '#3A2C5C'};
       letter-spacing: 0.3px;
@@ -88,7 +114,7 @@ export async function exportElementToPng(targetEl, opts) {
     frame.appendChild(cap)
   }
 
-  // 4. Watermark Fresh Mind — внизу справа
+  // 5. Watermark Fresh Mind — внизу справа
   const wm = document.createElement('div')
   wm.textContent = 'Fresh Mind'
   wm.style.cssText = `
@@ -106,7 +132,7 @@ export async function exportElementToPng(targetEl, opts) {
   document.body.appendChild(frame)
 
   try {
-    // 5. Рендерим в canvas через html2canvas
+    // 6. Рендерим в canvas через html2canvas
     const canvas = await html2canvas(frame, {
       backgroundColor: bg.value, // null = transparent
       scale: 2,
@@ -118,19 +144,19 @@ export async function exportElementToPng(targetEl, opts) {
       logging: false
     })
 
-    // 6. Получаем PNG как Blob → ArrayBuffer
+    // 7. Получаем PNG как Blob → ArrayBuffer
     const blob = await new Promise(res => canvas.toBlob(res, 'image/png'))
     if (!blob) throw new Error('Не удалось сформировать PNG')
     const arrayBuffer = await blob.arrayBuffer()
 
-    // 7. Передаём в main для save-dialog
+    // 8. Передаём в main для save-dialog
     const suggestedName = `${filenameStem}-${sz.w}x${sz.h}.png`
     const result = await window.freshMind.savePngFile(arrayBuffer, suggestedName)
     return result
   } catch (err) {
     return { error: err.message || String(err) }
   } finally {
-    // 8. Очищаем DOM
+    // 9. Очищаем DOM
     if (frame.parentNode) frame.parentNode.removeChild(frame)
   }
 }
